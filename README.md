@@ -14,6 +14,11 @@ eval/queries.yaml 40 queries, relevance judgments to be filled in by hand
 eval/metrics.py   recall@k, MRR, nDCG@10 (pure functions, hand-computed tests)
 eval/run.py       harness: any object with search(query, k) -> metrics table
 eval/pool.py      build a judging pool from retriever output, merge grades back
+agent/graph.py    decompose/route state graph, RRF fusion over sub-query results
+agent/llm.py      Ollama HTTP client + committed on-disk response cache
+agent/prompts.py  the two prompts, first draft, frozen
+agent/run.py      run the agent over the query set: routes, fallbacks, latency split
+agent/coverage.py how much of what the agent retrieves has never been judged
 ```
 
 ## Setup
@@ -29,7 +34,17 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requiremen
 .venv/bin/python -m eval.run --retriever bm25 -v
 ```
 
-CI (`.github/workflows/ci.yml`): `ruff check`, `ruff format --check`, `pytest -q`.
+The agent layer is optional and installs separately, like the embedder:
+
+```bash
+.venv/bin/pip install -r requirements-agent.txt
+ollama serve && ollama pull qwen2.5:7b        # only needed for live calls
+.venv/bin/python -m agent.run --offline                    # replays the committed cache
+.venv/bin/python -m agent.coverage --offline --baseline    # unjudged-page audit
+```
+
+CI (`.github/workflows/ci.yml`): `ruff check`, `ruff format --check`, `pytest -q`. The test
+suite never contacts Ollama — every model call is mocked — so it passes with nothing served.
 
 ## Corpus
 
@@ -475,6 +490,162 @@ These are the reasons not to read the table as a clean measurement of retrieval 
 To plug in a retriever, implement `search(query: str, k: int) -> list[str]` returning chunk ids
 from `data/corpus.db` and pass it to `eval.run.evaluate(retriever, load_queries(), store.locate)`.
 
+## Agent
+
+`agent/` adds a layer above the retrievers: an LLM decides whether a query needs splitting,
+splits it if so, retrieves for each sub-query and fuses the result lists. It is a retriever
+like any other — `search(query, k) -> list[chunk_id]` — so it drops into `eval.run` and
+`eval.pool` unchanged, and it is pluggable over BM25, dense or the hybrid (default hybrid).
+
+The control flow is an explicit state graph, written out in `agent/graph.py` rather than
+imported from a framework:
+
+```
+route ──(decompose)──> decompose ──┐
+  │                                ├──> retrieve ──> fuse ──> END
+  └──(direct)────────> direct ─────┘
+```
+
+Nodes take the state and return it; edges are either a node name or a function of the state,
+so the whole graph is inspectable as data (`agent.graph.GRAPH`) and each node is testable on
+its own. Routing is one model call returning a structured verdict — `{"route": ...,
+"reason": ...}` — and every query's path, verdict and timings land in
+`AgentRetriever.traces`.
+
+**Constants are fixed a priori and asserted in `tests/test_agent.py`**, so tuning one against
+eval scores fails CI rather than passing quietly:
+
+| constant | value | |
+|---|---|---|
+| `MAX_SUB_QUERIES` | 3 | at most three sub-queries per query |
+| `DECOMPOSITION_DEPTH` | 1 | sub-queries are never themselves decomposed |
+| `RESULTS_PER_SUB_QUERY` | 10 | retrieved per sub-query, before fusion |
+| `RRF_K` | 60 | imported from `retrieval.hybrid`, not redefined |
+| `TEMPERATURE` | 0.0 | greedy decoding |
+
+Fusion reuses `retrieval.hybrid.rrf_scores` — the same published constant and the same
+formula that fuses BM25 with dense — and fuses at the level of the canonical page, so two
+sub-queries that surface the same page from different chunks add their evidence instead of
+splitting it across two slots. The fused list is truncated to the requested `k`.
+
+The prompts in `agent/prompts.py` are a first draft and are frozen. They are not to be
+iterated against eval scores: 40 queries whose judgments are pooled from the very retrievers
+being compared would fit the noise, which is the same argument that keeps `RRF_K` at its
+published value.
+
+### Model and cache
+
+`qwen2.5:7b` served locally by Ollama at `http://localhost:11434`, called over plain HTTP with
+`requests` — no LangChain, no LangGraph, no client library. `requirements-agent.txt` keeps
+this out of the core suite, as `requirements-embed.txt` does for the embedder. A missing
+server or an unpulled model fails up front with the command that fixes it, before 40 queries'
+worth of work rather than midway through.
+
+Every response is cached to `agent/cache/ollama.json`, keyed by `sha256(model, prompt,
+query)`, and **the cache is committed** (63 entries, 24K). Because the key covers the full
+prompt text, editing a frozen prompt invalidates its entries rather than silently reusing
+stale generations. `--offline` refuses to call Ollama at all, so a cache miss is an error
+instead of a quiet live call — which is what makes the replay verifiable:
+
+```
+python -m agent.run --offline           # reproduces with no Ollama and no GPU
+python -m agent.coverage --offline --baseline
+```
+
+Both commands above reproduce in a network-isolated namespace. Re-running live at temperature
+0 reproduced the cached routing exactly on the categories tested.
+
+### What it does, measured
+
+40 queries, agent over hybrid, `k=10`:
+
+| | |
+|---|---|
+| route | 23 decompose, 17 direct |
+| sub-queries | 65 total, 1.62 per query |
+| decomposition fallbacks | **0 / 23** |
+| model calls | 63 (40 route + 23 decompose) |
+
+**The decomposition fallback rate is 0/23 on these 40 queries.** That is the honest number and
+it is lower than expected for a 7B local model; the credit belongs mostly to Ollama's
+`format="json"` constrained decoding, not to the prompt. Constrained decoding guarantees
+*valid JSON*, not *the requested schema*, so the parsers validate the schema themselves —
+element by element for the sub-query list — and the fallback path is exercised by tests
+rather than by production. It is a real path, not dead code, and the rate is a property worth
+re-checking on any prompt or model change rather than a box that has been ticked.
+
+Latency, split by where the time went:
+
+| latency (s) | mean | median | max | total |
+|---|---|---|---|---|
+| model | 0.765 | 0.783 | 4.635 | 30.62 |
+| retrieval | 0.058 | 0.053 | 0.296 | 2.33 |
+| end to end | 0.824 | 0.833 | 4.931 | 32.95 |
+
+**Model time is 92.9% of the work.** The 4.6 s maximum is the first call, paying the model
+load; the median is the number to reason about. `total` is model + retrieval, deliberately
+*not* the measured wall clock: on a cache hit the model half is the latency recorded when that
+call originally ran live, so a replay's wall clock omits it entirely and would report a system
+three orders of magnitude faster than the one that exists. `wall_seconds` keeps the measured
+replay cost for anyone who wants it, and `--fresh-timings` takes both halves from one live
+run.
+
+### Judgment coverage: the ablation is not yet interpretable
+
+The ablation has **not** been run, because scoring the agent against the current judgments
+would mostly measure the pool. `eval/queries.yaml` was pooled from BM25 and dense top-10s, and
+`eval.run` scores anything unjudged as grade 0 — so a perfect page the pool never saw is
+punished, not rewarded. `agent/coverage.py` measures that hole first.
+
+Agent over hybrid, `k=10`, against the 611 existing judgments:
+
+| group | queries | retrieved | unjudged | rate | distinct pages |
+|---|---|---|---|---|---|
+| all | 40 | 400 | 80 | **20.0%** | 75 |
+| api_lookup | 12 | 120 | 23 | 19.2% | 22 |
+| conceptual | 10 | 100 | 19 | 19.0% | 19 |
+| multi_hop | 8 | 80 | 24 | **30.0%** | 24 |
+| tutorial | 10 | 100 | 14 | 14.0% | 13 |
+
+**One in five pages the agent returns has never been graded**, and one in three for
+`multi_hop` — the category decomposition is supposed to help, which is exactly where the
+measurement is least trustworthy. Only 9 of 40 queries are fully covered.
+
+That 20% is unreadable without a control, so `--baseline` measures the base retriever alone:
+
+| retriever | retrieved | unjudged | rate | distinct pages |
+|---|---|---|---|---|
+| bm25 | 400 | 0 | 0.0% | 0 |
+| dense | 400 | 0 | 0.0% | 0 |
+| hybrid | 400 | 42 | 10.5% | 40 |
+| agent/bm25 | 400 | 72 | 18.0% | 65 |
+| agent/dense | 400 | 76 | 19.0% | 72 |
+| agent/hybrid | 400 | 80 | 20.0% | 75 |
+
+BM25 and dense score 0% **by construction** — the pool *is* their top-10s, so they cannot
+surface anything unjudged. This is the pooling bias made visible: the two retrievers that
+built the pool are the only two it fully covers. Note the corollary, which is not about the
+agent at all: **the hybrid's published numbers already run through a 10.5% unjudged hole**,
+and it was scored anyway. The agent adds 9.5pp on top of that, not the full 20.
+
+Sizing the re-pool:
+
+- **80 (query, page) pairs** to grade for `agent/hybrid` alone — the number of decisions.
+- **75 distinct pages** to read — one page unjudged for three queries is three decisions but
+  one read.
+- **191 pairs / 165 distinct pages** to cover all three agent variants at once, which is the
+  cheaper order if the ablation is going to compare them.
+
+For scale, the existing 611 judgments took two rounds of grading. Adding 80 is roughly a 13%
+increase; 191 is roughly 31%.
+
+Until those are graded, an agent-vs-hybrid comparison on this judgment set is measuring pool
+coverage as much as retrieval quality, and the direction of the bias is known: it penalises
+the agent, because the agent is the system returning pages the pool never saw.
+`python -m agent.coverage --out <file>` writes the unjudged candidates as a gradeable delta
+pool in the same format `eval/pool.py` uses. Nothing is written by default, and nothing in
+`agent/` modifies a judgment file.
+
 ## Next
 
 1. ~~Grade `eval/pool.yaml` and merge it.~~ Done 2026-09-08.
@@ -489,3 +660,9 @@ from `data/corpus.db` and pass it to `eval.run.evaluate(retriever, load_queries(
    page at chunk time, or dropped. The data to decide is in `pages.canonical_url`, and the
    measured cost of not collapsing them is a drop in R@10 from 1.000 to 0.652 on the
    400-judgment set.
+6. **Grade the agent's unjudged pages, then run the ablation.** 80 (query, page) pairs / 75
+   distinct pages for `agent/hybrid`, or 191 / 165 to cover all three agent variants in one
+   round: `python -m agent.coverage --out eval/pool_agent.yaml`, grade, then
+   `python -m eval.pool append --pool eval/pool_agent.yaml`. Running the ablation before this
+   measures pool coverage, and the bias runs against the agent. The same round would close
+   the hybrid's own 10.5% hole, which is already open in the published numbers.

@@ -1,0 +1,506 @@
+{
+ "06fbcdda90a0f5894f4de1d3a995a5fa239055f85a175fdc01f25f3b5f96c0b2": {
+  "completion_tokens": 15,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 190,
+  "query": "step by step training loop for an image classifier on FashionMNIST",
+  "seconds": 0.3104,
+  "text": "{\"route\": \"direct\", \"reason\": \"single task described\"}"
+ },
+ "09ff630a91e0df0123cc1b121002df13c7df3ad5ceabe71259a30babbf235fc6": {
+  "completion_tokens": 18,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 196,
+  "query": "how does autocast decide which ops run in float16 and which stay in float32",
+  "seconds": 0.3816,
+  "text": "{\"route\": \"decompose\", \"reason\": \"involves two topics\"}"
+ },
+ "0d4f1c2b1738b73cd443bb4fab2b75f6079c9e5bf488f6018a3d4491a30f11be": {
+  "completion_tokens": 15,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 190,
+  "query": "walk me through saving and loading a checkpoint so I can resume training",
+  "seconds": 0.3303,
+  "text": "{\"route\": \"direct\", \"reason\": \"single task described\"}"
+ },
+ "0e7b610866add7c1f402b75b49eb3cb4c0c3de635ef818ecf887bec54dd76746": {
+  "completion_tokens": 20,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 168,
+  "query": "torch.load weights_only default and how to allowlist custom classes",
+  "seconds": 0.4063,
+  "text": "{\"sub_queries\": [\"torch.load weights_only default\", \"how to allowlist custom classes\"]}"
+ },
+ "0f0653a775c5188e0ba722e38053a9bffbf81e84376542413881db2243a61210": {
+  "completion_tokens": 15,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 190,
+  "query": "why does calling backward twice raise an error about the graph being freed",
+  "seconds": 0.3622,
+  "text": "{\"route\": \"direct\", \"reason\": \"single API behavior\"}"
+ },
+ "128c5f1b1280c2fd08e8102526a3a9eb54dfb270a4d144378e32e1d6a3b95ec7": {
+  "completion_tokens": 33,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 173,
+  "query": "difference between scatter_reduce, index_add_ and index_reduce_ and which reductions each supports",
+  "seconds": 0.6965,
+  "text": "{\"sub_queries\": [\"difference between scatter_reduce and index_add_ which reductions each supports\", \"difference between scatter_reduce and index_reduce_ which reductions each supports\"]}"
+ },
+ "12e30fbbf06a6e73fc0fe1179238f75b7531ea3bb29d27111dec1f883a94f55d": {
+  "completion_tokens": 18,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 189,
+  "query": "torch.load weights_only default and how to allowlist custom classes",
+  "seconds": 0.3856,
+  "text": "{\"route\": \"decompose\", \"reason\": \"asks about two distinct topics\"}"
+ },
+ "1ca26bbda217149c1943490f33dd835ee659b06abe87d74c8f79cdb166b89334": {
+  "completion_tokens": 21,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 168,
+  "query": "fine-tune a pretrained torchvision model on my own small dataset",
+  "seconds": 0.4249,
+  "text": "{\"sub_queries\": [\"fine-tune a pretrained torchvision model\", \"on my own small dataset\"]}"
+ },
+ "1e7e12d013f7db6f53744f3a2ec9ab855bf6273e5f766a7763d7b6190867bd0d": {
+  "completion_tokens": 16,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 193,
+  "query": "which optimizers support the foreach and fused implementations and how do I turn them off",
+  "seconds": 0.3608,
+  "text": "{\"route\": \"decompose\", \"reason\": \"two distinct topics\"}"
+ },
+ "25332c3b031794150e2056105db1ca413660e1e726be3cc57da52e8fc746f92e": {
+  "completion_tokens": 20,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 171,
+  "query": "can torch.compile trace through a custom autograd.Function and what are the restrictions",
+  "seconds": 0.4072,
+  "text": "{\"sub_queries\": [\"torch.compile trace custom autograd.Function\", \"restrictions torch.compile\"]}"
+ },
+ "287b6565e426b756885f87c9c13369ec34fa3a509964871e2f764ea8456c7798": {
+  "completion_tokens": 25,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 174,
+  "query": "does DataLoader copy the dataset into each worker process and how do I seed numpy correctly in workers",
+  "seconds": 0.5063,
+  "text": "{\"sub_queries\": [\"DataLoader copy dataset into each worker process\", \"how do I seed numpy correctly in workers\"]}"
+ },
+ "2ccb344710214c8cab5f09f4bb2452550aa058a10abb93b7a14ff54e6f878b74": {
+  "completion_tokens": 19,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 192,
+  "query": "can torch.compile trace through a custom autograd.Function and what are the restrictions",
+  "seconds": 0.4004,
+  "text": "{\"route\": \"decompose\", \"reason\": \"asks about compile and autograd\"}"
+ },
+ "2db0faa532ba9fee16bd2543ffba2435b0208f8714da86434960c93a9fc108a2": {
+  "completion_tokens": 19,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 191,
+  "query": "how do I set the random seed for CPU and every GPU at once",
+  "seconds": 0.3998,
+  "text": "{\"route\": \"decompose\", \"reason\": \"involves CPU and GPU\"}"
+ },
+ "2e46688cd87cb970e8675c3a905c64167b81feb995d68bd19b07c11b63386461": {
+  "completion_tokens": 26,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 164,
+  "query": "DataLoader num_workers persistent_workers prefetch_factor meaning",
+  "seconds": 0.5629,
+  "text": "{\"sub_queries\": [\"DataLoader num_workers meaning\", \"DataLoader persistent_workers meaning\", \"DataLoader prefetch_factor meaning\"]}"
+ },
+ "2edc5367ef96d34447b9a91cfcdbcc12f2ca9ed3eb566438341e41e3124014a8": {
+  "completion_tokens": 16,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 191,
+  "query": "what is a graph break in torch.compile and why does it hurt performance",
+  "seconds": 0.3307,
+  "text": "{\"route\": \"decompose\", \"reason\": \"two distinct topics\"}"
+ },
+ "2f79a559ad787804346e0dc448b52b5fa48f22fc3263bf693dee01251eef6783": {
+  "completion_tokens": 15,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 194,
+  "query": "what does contiguous mean for a tensor and when do I need to call .contiguous()",
+  "seconds": 0.362,
+  "text": "{\"route\": \"direct\", \"reason\": \"single concept explained\"}"
+ },
+ "30e3eb1ba7dd778eeac701e0ea0f48213d2a70fbc3b39e0f6158a11bb499da63": {
+  "completion_tokens": 18,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 190,
+  "query": "how are gradients defined for complex-valued tensors in PyTorch",
+  "seconds": 0.3771,
+  "text": "{\"route\": \"decompose\", \"reason\": \"involves complex tensors\"}"
+ },
+ "30f610caa61bc54d9f40705107e27f9f9cdcc32b1dc2f25801a962795d4bd66e": {
+  "completion_tokens": 18,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 197,
+  "query": "what dtype does autocast use on CPU versus CUDA and how do I use it together with GradScaler",
+  "seconds": 0.3957,
+  "text": "{\"route\": \"decompose\", \"reason\": \"compares CPU and CUDA\"}"
+ },
+ "358b2adb47bb8072451210c096e3a728330ef68534d62f00a10fcbd4f73121f6": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 194,
+  "query": "difference between scatter_reduce, index_add_ and index_reduce_ and which reductions each supports",
+  "seconds": 0.3625,
+  "text": "{\"route\": \"decompose\", \"reason\": \"compares three APIs\"}"
+ },
+ "36bf294b78928dbb970c3df889e419b4325d1f148867795f76d08caf2d50ef5f": {
+  "completion_tokens": 27,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 168,
+  "query": "how do I profile my training loop to find what is slow",
+  "seconds": 0.5298,
+  "text": "{\"sub_queries\": [\"how do I profile training loop in PyTorch\", \"what are common slow parts in training loop\"]}"
+ },
+ "426131e9af24fc2fae7edfb694a6539e8eafff89b74f277985291b58ca6fa9e6": {
+  "completion_tokens": 15,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 186,
+  "query": "quantize a trained model for faster CPU inference",
+  "seconds": 0.3464,
+  "text": "{\"route\": \"direct\", \"reason\": \"single task described\"}"
+ },
+ "470fb462144ef1619f490b76b2bf0cde4eec4daa3238743af8e0be1c0de7a3e7": {
+  "completion_tokens": 31,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 173,
+  "query": "how to make cuDNN convolutions deterministic and what performance and error behavior to expect",
+  "seconds": 0.6667,
+  "text": "{\"sub_queries\": [\"how to make cuDNN convolutions deterministic\", \"what performance and error behavior to expect from cuDNN convolutions\"]}"
+ },
+ "4db0a382524555b4d1b669fe73a7401b3ee83948f5a5b2c1b231b4710c473f02": {
+  "completion_tokens": 18,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 189,
+  "query": "fine-tune a pretrained torchvision model on my own small dataset",
+  "seconds": 0.3596,
+  "text": "{\"route\": \"decompose\", \"reason\": \"involves multiple steps\"}"
+ },
+ "5818bde08a6bd16e7b9e03ec99fa0eba40c7f139f7f13e894a674e83b6578c87": {
+  "completion_tokens": 22,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 172,
+  "query": "which optimizers support the foreach and fused implementations and how do I turn them off",
+  "seconds": 0.4404,
+  "text": "{\"sub_queries\": [\"which optimizers support foreach implementations\", \"how do I turn off fused implementations\"]}"
+ },
+ "5c5c72af6035a8739fc37d26df153dc31c1fefa104d4c75ecf7393c7f67e3c3c": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 186,
+  "query": "getting started with torch.export to export a model",
+  "seconds": 0.4079,
+  "text": "{\"route\": \"direct\", \"reason\": \"single task, one page\"}"
+ },
+ "5d05de7ff56886102c31f700d59a0416ffdb770596f6e746bb9cc2c530fa41cf": {
+  "completion_tokens": 20,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 176,
+  "query": "how do FSDP and DDP differ in the way they shard parameters, gradients and optimizer state",
+  "seconds": 0.4063,
+  "text": "{\"sub_queries\": [\"FSDP parameter sharding\", \"DDP parameter sharding\"]}"
+ },
+ "6a45ed654b8e4719bba5caeec34fd024be0e5bb4705aa84370ccd7c816222756": {
+  "completion_tokens": 16,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 190,
+  "query": "run a training script across multiple GPUs with DistributedDataParallel from scratch",
+  "seconds": 0.3309,
+  "text": "{\"route\": \"decompose\", \"reason\": \"multiple topics involved\"}"
+ },
+ "6da6bdc5f685941efcbfb20b05774cf4d313dc4d5fdc3cde569a273787c5c594": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 195,
+  "query": "does DataLoader copy the dataset into each worker process and how do I seed numpy correctly in workers",
+  "seconds": 0.3692,
+  "text": "{\"route\": \"decompose\", \"reason\": \"asks about two topics\"}"
+ },
+ "731f519ad0789de17c4e3bb85f75ca8990db0b5b1a9f52b7a5cdc072480e2bc0": {
+  "completion_tokens": 21,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 167,
+  "query": "when should I use register_buffer instead of an nn.Parameter",
+  "seconds": 0.4259,
+  "text": "{\"sub_queries\": [\"when should I use register_buffer\", \"when should I use nn.Parameter\"]}"
+ },
+ "75d361a0e0f387e5a8bc232e3e3ee29e962e8db014098d39f072f74f09f8de25": {
+  "completion_tokens": 16,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 166,
+  "query": "difference between torch.no_grad and torch.inference_mode",
+  "seconds": 0.3255,
+  "text": "{\"sub_queries\": [\"torch.no_grad\", \"torch.inference_mode\"]}"
+ },
+ "839950f4dfafe07509858d41682a827b8a86eb89edeb03bd7fcd796aa21d19a9": {
+  "completion_tokens": 16,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 194,
+  "query": "how to make cuDNN convolutions deterministic and what performance and error behavior to expect",
+  "seconds": 0.368,
+  "text": "{\"route\": \"decompose\", \"reason\": \"two distinct topics\"}"
+ },
+ "88e73995a51a073caff163176c3c58f52b1322a6d6707bf8e2cc35b3af5a6ed3": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 186,
+  "query": "torch.einsum equation syntax with ellipsis",
+  "seconds": 0.3869,
+  "text": "{\"route\": \"direct\", \"reason\": \"single API, single fact\"}"
+ },
+ "8be847a02a5eb66eac34d81b4ac54876e4fb0a2d9121e8cf60ecdb1cf7e4c27f": {
+  "completion_tokens": 31,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 171,
+  "query": "does view share memory with the original tensor and how is that different from reshape",
+  "seconds": 0.6136,
+  "text": "{\"sub_queries\": [\"does the view share memory with the original tensor\", \"what is the difference between view and reshape in terms of memory sharing\"]}"
+ },
+ "8d8ed51554946eb24cebc21dad30bb7d7450c0e6870db4a3a1c170718ee774f1": {
+  "completion_tokens": 16,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 188,
+  "query": "nn.Module.register_forward_hook with_kwargs and always_call parameters",
+  "seconds": 0.3701,
+  "text": "{\"route\": \"direct\", \"reason\": \"single API with parameters\"}"
+ },
+ "93b08f4d43bf40ff83008e15298d57f72c9058d13a82224ca10e55d38e0019a0": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 189,
+  "query": "torch.compile mode='reduce-overhead' what does it do",
+  "seconds": 0.3852,
+  "text": "{\"route\": \"direct\", \"reason\": \"single API, single task\"}"
+ },
+ "96a0e73be34190130c24a8154a434ef45c968b2d8ea26994854553665a4a7d80": {
+  "completion_tokens": 19,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 189,
+  "query": "how do I profile my training loop to find what is slow",
+  "seconds": 0.4117,
+  "text": "{\"route\": \"decompose\", \"reason\": \"asks about profiling a training loop\"}"
+ },
+ "96c43424c2d677338148947a669a75ae8237a20b06b68eedd95628c19ff67e9a": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 197,
+  "query": "how do FSDP and DDP differ in the way they shard parameters, gradients and optimizer state",
+  "seconds": 0.3696,
+  "text": "{\"route\": \"decompose\", \"reason\": \"compares two things\"}"
+ },
+ "9827c6274d2750cdb3cab9f93a1d6443054cf20973f471739233e12407345c04": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 187,
+  "query": "Tensor.scatter_ signature and the reduce options it accepts",
+  "seconds": 0.3923,
+  "text": "{\"route\": \"direct\", \"reason\": \"single API, single fact\"}"
+ },
+ "9bd279c1f82dcc54709d844cb5ad5afbcd0fdb0f8f83c5e379e704408531fdc4": {
+  "completion_tokens": 26,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 169,
+  "query": "how do I write a custom Dataset class and use it with DataLoader",
+  "seconds": 0.5218,
+  "text": "{\"sub_queries\": [\"how do I write a custom Dataset class\", \"how do I use a custom Dataset with DataLoader\"]}"
+ },
+ "a1e78184e4eb895cdde313e4b234077bd9211db95c55433baf3e8d77ffceb009": {
+  "completion_tokens": 29,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 177,
+  "query": "save a model trained with DistributedDataParallel and load it for single-GPU inference without the module. prefix",
+  "seconds": 0.5736,
+  "text": "{\"sub_queries\": [\"save a model trained with DistributedDataParallel\", \"load it for single-GPU inference without the module. prefix\"]}"
+ },
+ "a58c8e29a14e28a03c41ac53fbfbf736655c3be128c95acf6c717794f2b43166": {
+  "completion_tokens": 18,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 190,
+  "query": "Conv2d padding='same' with dilation greater than 1",
+  "seconds": 0.3605,
+  "text": "{\"route\": \"decompose\", \"reason\": \"compares padding with dilation\"}"
+ },
+ "a6c1e4088187fde70c103328888d145a87666564ce983f0c959972beb2da0011": {
+  "completion_tokens": 21,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 175,
+  "query": "how does autocast decide which ops run in float16 and which stay in float32",
+  "seconds": 0.427,
+  "text": "{\"sub_queries\": [\"autocast op selection\", \"float16 vs float32\"]}"
+ },
+ "a7beac6034808d7443133fbf040a4465a602293aecb6088ba6a1625e2c2af035": {
+  "completion_tokens": 15,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 190,
+  "query": "function that returns the indices of the k largest values along a dimension",
+  "seconds": 0.3514,
+  "text": "{\"route\": \"direct\", \"reason\": \"single API query\"}"
+ },
+ "b35d0c05794f1f73b5d42864188827aa956b73afd570ad6611505e0c7bebae27": {
+  "completion_tokens": 15,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 184,
+  "query": "default eps value in torch.optim.Adam",
+  "seconds": 0.3188,
+  "text": "{\"route\": \"direct\", \"reason\": \"single API value\"}"
+ },
+ "b474bb503f2538a92621feb715a67899324ca0fb69663c43baffef19e66888f7": {
+  "completion_tokens": 33,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 172,
+  "query": "what is a leaf tensor and why is .grad None on a non-leaf",
+  "seconds": 0.655,
+  "text": "{\"sub_queries\": [\"what is a leaf tensor in PyTorch\", \"why is .grad None on a non-leaf tensor in PyTorch\"]}"
+ },
+ "c7bfad0a3853c7674f838655b0e46e714cf3e7a7e1db12930f8e3079fc837a94": {
+  "completion_tokens": 15,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 192,
+  "query": "example of building a neural network by subclassing nn.Module with a forward method",
+  "seconds": 0.3308,
+  "text": "{\"route\": \"direct\", \"reason\": \"single task described\"}"
+ },
+ "c8034b09c88e3a70912ee7eee809a28c8e7805f514674128e3aab6b4a7e44a17": {
+  "completion_tokens": 37,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 176,
+  "query": "what dtype does autocast use on CPU versus CUDA and how do I use it together with GradScaler",
+  "seconds": 0.737,
+  "text": "{\"sub_queries\": [\"what dtype does autocast use on CPU\", \"what dtype does autocast use on CUDA\", \"how do I use autocast together with GradScaler\"]}"
+ },
+ "c908fcc2b5580dd350923f4c2ec76d0229a2d69c2fe8742367b61cf2d7406120": {
+  "completion_tokens": 20,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 170,
+  "query": "how do I set the random seed for CPU and every GPU at once",
+  "seconds": 0.4073,
+  "text": "{\"sub_queries\": [\"set random seed for CPU\", \"set random seed for every GPU\"]}"
+ },
+ "cf30e5116b334f5f21e4b158b445dff483bd092740925e525c5f515c39291872": {
+  "completion_tokens": 21,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 169,
+  "query": "Conv2d padding='same' with dilation greater than 1",
+  "seconds": 0.422,
+  "text": "{\"sub_queries\": [\"Conv2d padding='same'\", \"dilation greater than 1\"]}"
+ },
+ "d5d45a3840da4ebb9f5f0a151d8e037511f9d541424a4b27b73f463ba36f1d93": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 188,
+  "query": "when should I use register_buffer instead of an nn.Parameter",
+  "seconds": 0.3596,
+  "text": "{\"route\": \"decompose\", \"reason\": \"compares two things\"}"
+ },
+ "d946e7e983302c4fc842d795fbaffedaa53ada8ac5eb00abf1500f81a6a16488": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 185,
+  "query": "DataLoader num_workers persistent_workers prefetch_factor meaning",
+  "seconds": 0.3632,
+  "text": "{\"route\": \"decompose\", \"reason\": \"asks about multiple parameters\"}"
+ },
+ "daa54cf3d638a4e4d673df013a200380d101a1b6775929a1fd147a5709b0630c": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 183,
+  "query": "what does torch.topk return",
+  "seconds": 0.3779,
+  "text": "{\"route\": \"direct\", \"reason\": \"single API, one fact\"}"
+ },
+ "dae7f4aab4053928fa131ced766e37547243c6fbaa51acc52f5adac3aa99872c": {
+  "completion_tokens": 18,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 198,
+  "query": "save a model trained with DistributedDataParallel and load it for single-GPU inference without the module. prefix",
+  "seconds": 0.3817,
+  "text": "{\"route\": \"decompose\", \"reason\": \"involves two tasks\"}"
+ },
+ "df9ae613340c6cef262af6677279064be750e710e3eab16b5ed885687979d184": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 193,
+  "query": "what is a leaf tensor and why is .grad None on a non-leaf",
+  "seconds": 0.3828,
+  "text": "{\"route\": \"decompose\", \"reason\": \"explains two concepts\"}"
+ },
+ "e06f7c984fcfe08c7201b0b70064ead666647c77ccdac4e731972469888c087c": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 186,
+  "query": "torch.nn.functional.cross_entropy label_smoothing argument",
+  "seconds": 4.6349,
+  "text": "{\"route\": \"direct\", \"reason\": \"single API, single fact\"}"
+ },
+ "e37a56b1b739f36140acf303793a7d10893d574e9be07f82b0c4342d3607e327": {
+  "completion_tokens": 16,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 190,
+  "query": "how do I write a custom Dataset class and use it with DataLoader",
+  "seconds": 0.3635,
+  "text": "{\"route\": \"decompose\", \"reason\": \"two distinct topics\"}"
+ },
+ "e4dc0eea0d27a51994674a3771b2909cb063c02b98ad277406e988aa42bb4447": {
+  "completion_tokens": 25,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 170,
+  "query": "what is a graph break in torch.compile and why does it hurt performance",
+  "seconds": 0.5041,
+  "text": "{\"sub_queries\": [\"What is a graph break in torch.compile?\", \"Why does a graph break hurt performance?\"]}"
+ },
+ "ecf15e9c91a8b20276e425aad24e8b697d152f99c782f8ebc8ccc5f80e77c20d": {
+  "completion_tokens": 29,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 169,
+  "query": "how are gradients defined for complex-valued tensors in PyTorch",
+  "seconds": 0.5804,
+  "text": "{\"sub_queries\": [\"gradients defined for complex-valued tensors in PyTorch\", \"complex-valued tensors in PyTorch\"]}"
+ },
+ "edfbc78fc3fdf9fb83c1d45972ba6dc325099b2796109c34d2a55d74da7b80ea": {
+  "completion_tokens": 18,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 192,
+  "query": "does view share memory with the original tensor and how is that different from reshape",
+  "seconds": 0.4134,
+  "text": "{\"route\": \"decompose\", \"reason\": \"compares view with reshape\"}"
+ },
+ "fc09f18361d09af308766b0399d2e5511dbf51a4225d25849cffcf4896d8ce55": {
+  "completion_tokens": 18,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 169,
+  "query": "run a training script across multiple GPUs with DistributedDataParallel from scratch",
+  "seconds": 0.379,
+  "text": "{\"sub_queries\": [\"run training script with DistributedDataParallel\", \"multiple GPUs\"]}"
+ },
+ "fcda29a78b4a25cf287b63eaf353f27cdb59b827fb497492aa71668f495fbfa0": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 187,
+  "query": "difference between torch.no_grad and torch.inference_mode",
+  "seconds": 0.3807,
+  "text": "{\"route\": \"decompose\", \"reason\": \"compares two things\"}"
+ },
+ "fe015bc60fb7ac969514e66c9bea331a6c46b483888bef4998a4c3f68ae4f2f0": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 193,
+  "query": "when does autograd complain that a variable needed for gradient computation was modified in-place",
+  "seconds": 0.3579,
+  "text": "{\"route\": \"direct\", \"reason\": \"single API, gradient computation\"}"
+ },
+ "feade274bb818e71478b08569fa6f824049d922eb979f2b52a76a4c4fe0822f4": {
+  "completion_tokens": 17,
+  "model": "qwen2.5:7b",
+  "prompt_tokens": 189,
+  "query": "how to log training curves to TensorBoard from PyTorch",
+  "seconds": 0.3635,
+  "text": "{\"route\": \"direct\", \"reason\": \"single task, one page\"}"
+ }
+}

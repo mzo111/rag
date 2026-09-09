@@ -1,0 +1,14 @@
+# Retrieval agent only (agent/). Kept out of requirements.txt so the core test suite stays
+# dependency-free, as with requirements-embed.txt.
+#
+# The agent talks to Ollama over plain HTTP, so the only Python dependency is `requests`,
+# which requirements.txt already pins for corpus fetching. It is repeated here so this file
+# installs standalone.
+#
+# The real dependency is the service, not a package:
+#     ollama serve
+#     ollama pull qwen2.5:7b
+#
+# The committed cache in agent/cache/ollama.json replays every model call made by the
+# evaluation, so neither Ollama nor a GPU is needed to reproduce the numbers.
+requests
