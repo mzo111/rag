@@ -633,11 +633,49 @@ Sizing the re-pool:
 - **80 (query, page) pairs** to grade for `agent/hybrid` alone — the number of decisions.
 - **75 distinct pages** to read — one page unjudged for three queries is three decisions but
   one read.
-- **191 pairs / 165 distinct pages** to cover all three agent variants at once, which is the
-  cheaper order if the ablation is going to compare them.
+- **203 pairs / 172 distinct pages** to cover all four systems at once, which is the cheaper
+  order if the ablation is going to compare them.
 
 For scale, the existing 611 judgments took two rounds of grading. Adding 80 is roughly a 13%
-increase; 191 is roughly 31%.
+increase; 203 is roughly 33%.
+
+### The re-pool file
+
+`eval/pool_agent.yaml` is that pool, emitted in the same format `eval/pool.py` writes and
+reads — **203 candidates over 40 queries, 172 distinct pages**, every `grade:` blank:
+
+```bash
+python -m agent.coverage --offline \
+  --system agent/bm25 --system agent/dense --system agent/hybrid --system hybrid \
+  --out eval/pool_agent.yaml
+```
+
+`--system` is repeatable, and the systems are pooled in **one** `build_pool` call rather than
+merged afterwards, so a page four systems returned is one candidate carrying four `found_by`
+entries, not four rows. The overlap is large: 270 unjudged pairs summed over the four systems
+collapse to 203 once pooled.
+
+| system | retrieved | unjudged | rate | distinct pages |
+|---|---|---|---|---|
+| agent/bm25 | 400 | 72 | 18.0% | 65 |
+| agent/dense | 400 | 76 | 19.0% | 72 |
+| agent/hybrid | 400 | 80 | 20.0% | 75 |
+| hybrid | 400 | 42 | 10.5% | 40 |
+| **union** | 743 | **203** | 27.3% | **172** |
+
+Per category, the union's unjudged rate is 21.3% `api_lookup`, 31.8% `conceptual`, 37.0%
+`multi_hop`, 21.2% `tutorial`. 8 of 40 queries are already fully covered; the worst are q14
+(60.0%), q24 (58.3%) and q10 (55.6%).
+
+Grade it, then **append** — `merge` replaces a query's whole `judgments` block and would
+destroy the existing 611:
+
+```bash
+python -m eval.pool append --pool eval/pool_agent.yaml
+```
+
+`--out` refuses to overwrite an existing file (`--force` overrides). A graded pool is not
+recoverable, and every other `eval/*.yaml` is one.
 
 Until those are graded, an agent-vs-hybrid comparison on this judgment set is measuring pool
 coverage as much as retrieval quality, and the direction of the bias is known: it penalises
@@ -660,9 +698,9 @@ pool in the same format `eval/pool.py` uses. Nothing is written by default, and 
    page at chunk time, or dropped. The data to decide is in `pages.canonical_url`, and the
    measured cost of not collapsing them is a drop in R@10 from 1.000 to 0.652 on the
    400-judgment set.
-6. **Grade the agent's unjudged pages, then run the ablation.** 80 (query, page) pairs / 75
-   distinct pages for `agent/hybrid`, or 191 / 165 to cover all three agent variants in one
-   round: `python -m agent.coverage --out eval/pool_agent.yaml`, grade, then
-   `python -m eval.pool append --pool eval/pool_agent.yaml`. Running the ablation before this
-   measures pool coverage, and the bias runs against the agent. The same round would close
-   the hybrid's own 10.5% hole, which is already open in the published numbers.
+6. **Grade `eval/pool_agent.yaml`, then run the ablation.** Built and unfilled: 203
+   candidates over 40 queries, 172 distinct pages, covering `agent/bm25`, `agent/dense`,
+   `agent/hybrid` and plain `hybrid` in one round. Grade it, then `python -m eval.pool append
+   --pool eval/pool_agent.yaml`. Running the ablation before this measures pool coverage, and
+   the bias runs against the agent. The same round closes the hybrid's own 10.5% hole, which
+   is already open in the published numbers.

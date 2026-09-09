@@ -4,7 +4,15 @@ import pytest
 import requests
 
 from agent import run as retrieval_factory
-from agent.coverage import analyze, format_comparison, format_coverage
+from agent.coverage import (
+    SYSTEMS,
+    analyze,
+    build_systems,
+    format_comparison,
+    format_coverage,
+    format_systems,
+)
+from agent.coverage import main as coverage_main
 from agent.graph import (
     DECOMPOSITION_DEPTH,
     END,
@@ -635,3 +643,86 @@ def test_coverage_table_renders(store):
         analyze(r, "fake", queries, store, _judged(queries, store), k=10), verbose=True
     )
     assert "api_lookup" in text and "distinct pages" in text
+
+
+# --- pooling the union of several systems ---------------------------------------
+
+
+def test_systems_lists_each_base_retriever_plain_and_agent_wrapped():
+    assert set(SYSTEMS) == {"bm25", "dense", "hybrid", "agent/bm25", "agent/dense", "agent/hybrid"}
+
+
+def test_build_systems_wraps_only_the_agent_prefixed_names(store):
+    systems = build_systems(["bm25", "agent/bm25"], store, FakeClient())
+    assert not isinstance(systems["bm25"], AgentRetriever)
+    assert isinstance(systems["agent/bm25"], AgentRetriever)
+
+
+def test_build_systems_shares_one_base_retriever_with_its_agent(store):
+    """Otherwise `hybrid` and `agent/hybrid` would each load the dense model separately."""
+    systems = build_systems(["bm25", "agent/bm25"], store, FakeClient())
+    assert systems["agent/bm25"].retriever is systems["bm25"]
+
+
+def test_build_systems_shares_one_client_across_agents(store):
+    client = FakeClient()
+    systems = build_systems(["agent/bm25", "agent/bm25"], store, client)
+    assert all(s.client is client for s in systems.values())
+
+
+def test_union_pool_counts_a_page_found_by_several_systems_once(store):
+    """The re-pool is what a human grades, so overlap must collapse, not multiply."""
+    from eval.pool import build_pool, delta_pool
+    from eval.run import Query
+
+    queries = [Query("q1", "first", "api_lookup", [])]
+    systems = {
+        "a": FakeRetriever({"first": ["a1", "t1"]}),
+        "b": FakeRetriever({"first": ["a1", "n1"]}),
+    }
+    delta = delta_pool(build_pool(systems, queries, store, k=10), {"q1": set()})
+    entry = delta["queries"]["q1"]
+    # P1, P2 and P3: three distinct pages from four retrieved slots.
+    assert entry["n_new"] == 3
+    found = {c["url"]: c["found_by"] for c in entry["candidates"]}
+    assert "a@1" in found[P1] and "b@1" in found[P1]
+
+
+def test_union_pool_records_which_system_found_a_page_alone(store):
+    from eval.pool import build_pool, delta_pool
+    from eval.run import Query
+
+    queries = [Query("q1", "first", "api_lookup", [])]
+    systems = {"a": FakeRetriever({"first": ["a1"]}), "b": FakeRetriever({"first": ["n1"]})}
+    delta = delta_pool(build_pool(systems, queries, store, k=10), {"q1": set()})
+    found = {c["url"]: c["found_by"] for c in delta["queries"]["q1"]["candidates"]}
+    assert found[P3] == "b@1" and found[P1] == "a@1"
+
+
+def test_format_systems_shows_the_union_and_the_collapse(store):
+    queries = _queries()
+    judged = _judged(queries, store)
+    per_system = {
+        "a": analyze(
+            FakeRetriever({"first": ["n1"], "second": []}), "a", queries, store, judged, k=10
+        ),
+        "b": analyze(
+            FakeRetriever({"first": ["n1"], "second": []}), "b", queries, store, judged, k=10
+        ),
+    }
+    union = analyze(
+        FakeRetriever({"first": ["n1"], "second": []}), "u", queries, store, judged, k=10
+    )
+    text = format_systems(per_system, union)
+    assert "union" in text
+    # 1 + 1 unjudged pairs across the two systems, but the same page: 1 candidate pooled.
+    assert "2 unjudged pairs summed over systems collapse to 1 distinct candidates" in text
+
+
+def test_out_refuses_to_overwrite_an_existing_file(tmp_path, capsys):
+    """A graded pool is unrecoverable; clobbering one must not be a typo away."""
+    existing = tmp_path / "pool.yaml"
+    existing.write_text("precious: judgments")
+    assert coverage_main(["--system", "bm25", "--out", str(existing)]) == 2
+    assert "refusing to overwrite" in capsys.readouterr().out
+    assert existing.read_text() == "precious: judgments"

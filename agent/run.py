@@ -58,26 +58,50 @@ def make_base_retriever(name: str, store):
     raise SystemExit(f"unknown retriever: {name!r} (choose from {', '.join(BASE_RETRIEVERS)})")
 
 
-def make_agent(
-    store,
-    base: str = DEFAULT_BASE,
+def make_client(
     *,
     model: str = DEFAULT_MODEL,
     base_url: str = DEFAULT_BASE_URL,
     cache_path: Path | None = None,
     offline: bool = False,
     check: bool = True,
-) -> AgentRetriever:
-    """An :class:`AgentRetriever` over the named base retriever.
+) -> OllamaClient:
+    """A cache-backed Ollama client.
 
     ``check`` probes Ollama up front so a missing server or unpulled model fails with a
     fixable message before 40 queries' worth of work, rather than midway through. It is
     skipped when ``offline``, which is the whole point of the committed cache.
+
+    Share one client across several agents rather than building one each: they would each
+    load the cache file separately and their saves would race to clobber one another.
     """
     cache = ResponseCache(cache_path) if cache_path is not None else ResponseCache()
     client = OllamaClient(model=model, base_url=base_url, cache=cache, offline=offline)
     if check and not offline:
         client.check_available()
+    return client
+
+
+def make_agent(
+    store,
+    base: str = DEFAULT_BASE,
+    *,
+    client: OllamaClient | None = None,
+    model: str = DEFAULT_MODEL,
+    base_url: str = DEFAULT_BASE_URL,
+    cache_path: Path | None = None,
+    offline: bool = False,
+    check: bool = True,
+) -> AgentRetriever:
+    """An :class:`AgentRetriever` over the named base retriever."""
+    if client is None:
+        client = make_client(
+            model=model,
+            base_url=base_url,
+            cache_path=cache_path,
+            offline=offline,
+            check=check,
+        )
     return AgentRetriever(store, make_base_retriever(base, store), client)
 
 
