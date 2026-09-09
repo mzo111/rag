@@ -9,3 +9,4 @@ data/*.db
 data/*.db-journal
 data/*.jsonl
 data/dense/
+*:Zone.Identifier
