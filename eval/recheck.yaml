@@ -1,0 +1,375 @@
+# Blind re-grade set - fill in every `grade:`, then score with eval/recheck_key.yaml.
+#
+#   2 = directly answers the query (the page you would send someone to)
+#   1 = partially answers, or is useful context / answers a sub-part
+#   0 = not relevant
+#
+# Every entry here was graded once before. The point is to measure how repeatable your own
+# judgments are, so grade each one fresh: do not look up these pages in pool.yaml,
+# pool_delta.yaml or queries.yaml first, and do not open recheck_key.yaml until you are done.
+#
+# The two halves are matched on snippet, title and section length, so entry length carries no
+# usable information about the earlier verdict. Grade on content alone.
+seed: 47713
+n: 40
+entries:
+- id: r01
+  query: default eps value in torch.optim.Adam
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.AdamW.html
+  title: AdamW
+  section: AdamW > torch.optim.AdamW
+  snippet: '$\begin{aligned} &\rule{110mm}{0.4pt} \\ &\textbf{input} : \gamma \text{(lr)}, \: \beta_1,
+    \beta_2 \text{(betas)}, \: \theta_0 \text{(params)}, \: f(\theta) \text{(objective)}, \: \epsilon
+    \text{ (epsilon)} \\ &\hspace{1...'
+  grade: 1
+- id: r02
+  query: why does calling backward twice raise an error about the graph being freed
+  url: https://docs.pytorch.org/tutorials/intermediate/custom_function_double_backward_tutorial.html
+  title: Double Backward with Custom Functions
+  section: Double Backward with Custom Functions
+  snippet: It is sometimes useful to run backwards twice through backward graph, for example to compute
+    higher-order gradients. It takes an understanding of autograd and some care to support double backwards,
+    however. Functions tha...
+  grade: 1
+- id: r03
+  query: default eps value in torch.optim.Adam
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.nadam.nadam_function.html
+  title: torch.optim.nadam.nadam
+  section: torch.optim.nadam.nadam > torch.optim.nadam.nadam
+  snippet: torch.optim.nadam.nadam(params, grads, exp_avgs, exp_avg_sqs, mu_products, state_steps, decoupled_weight_decay=False,
+    foreach=None, capturable=False, differentiable=False, has_complex=False, maximize=False, *, beta1,
+    bet...
+  grade: 0
+- id: r04
+  query: fine-tune a pretrained torchvision model on my own small dataset
+  url: https://docs.pytorch.org/docs/2.14/hub.html
+  title: torch.hub
+  section: Publishing models > How to implement an entrypoint?
+  snippet: '- Pretrained weights can either be stored locally in the GitHub repo, or loadable by torch.hub.load_state_dict_from_url().
+    If less than 2GB, it’s recommended to attach it to a project release and use the url from the rel...'
+  grade: 1
+- id: r05
+  query: how to make cuDNN convolutions deterministic and what performance and error behavior to expect
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.ConvTranspose2d.html
+  title: ConvTranspose2d
+  section: ConvTranspose2d > torch.nn.ConvTranspose2d
+  snippet: 'Note: In some circumstances when given tensors on a CUDA device and using CuDNN, this operator
+    may select a nondeterministic algorithm to increase performance. If this is undesirable, you can try
+    to make the operation de...'
+  grade: 2
+- id: r06
+  query: can torch.compile trace through a custom autograd.Function and what are the restrictions
+  url: https://docs.pytorch.org/docs/2.14/func.migrating.html
+  title: Migrating from functorch to torch.func
+  section: Migrating from functorch to torch.func > functorch.compile
+  snippet: We are no longer supporting functorch.compile (also known as AOTAutograd) as a frontend for
+    compilation in PyTorch; we have integrated AOTAutograd into PyTorch’s compilation story. If you are
+    a user, please use torch.com...
+  grade: 0
+- id: r07
+  query: torch.nn.functional.cross_entropy label_smoothing argument
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.functional.smooth_l1_loss.html
+  title: torch.nn.functional.smooth_l1_loss
+  section: torch.nn.functional.smooth_l1_loss > torch.nn.functional.smooth_l1_loss
+  snippet: torch.nn.functional.smooth_l1_loss(input, target, size_average=None, reduce=None, reduction='mean',
+    beta=1.0) Compute the Smooth L1 loss. Function uses a squared term if the absolute element-wise error
+    falls below beta a...
+  grade: 0
+- id: r08
+  query: torch.einsum equation syntax with ellipsis
+  url: https://docs.pytorch.org/tutorials/intermediate/neural_tangent_kernels.html
+  title: Neural Tangent Kernels
+  section: 'Neural Tangent Kernels > Compute the NTK: method 2 (NTK-vector products)'
+  snippet: '```python def empirical_ntk_ntk_vps(func, params, x1, x2, compute=''full''): def get_ntk(x1,
+    x2): def func_x1(params): return func(params, x1) def func_x2(params): return func(params, x2) output,
+    vjp_fn = vjp(func_x1, para...'
+  grade: 0
+- id: r09
+  query: function that returns the indices of the k largest values along a dimension
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.take_along_dim.html
+  title: torch.take_along_dim
+  section: torch.take_along_dim > torch.take_along_dim
+  snippet: torch.take_along_dim(input, indices, dim=None, *, out=None) → Tensor Selects values from input
+    at the 1-dimensional indices from indices along the given dim. If dim is None, the input array is
+    treated as if it has been f...
+  grade: 0
+- id: r10
+  query: torch.compile mode='reduce-overhead' what does it do
+  url: https://docs.pytorch.org/tutorials/intermediate/torch_compile_tutorial.html
+  title: Introduction to torch.compile
+  section: Introduction to torch.compile > Demonstrating Speedups
+  snippet: And indeed, we can see that running our model with torch.compile results in a significant speedup.
+    Speedup mainly comes from reducing Python overhead and GPU read/writes, and so the observed speedup
+    may vary on factors s...
+  grade: 0
+- id: r11
+  query: DataLoader num_workers persistent_workers prefetch_factor meaning
+  url: https://docs.pytorch.org/docs/2.14/notes/cuda.html
+  title: CUDA semantics
+  section: Best practices > Use pinned memory buffers
+  snippet: '``` This is an advanced tip. If you overuse pinned memory, it can cause serious problems when
+    running low on RAM, and you should be aware that pinning is often an expensive operation. ``` Host
+    to GPU copies are much fast...'
+  grade: 0
+- id: r12
+  query: example of building a neural network by subclassing nn.Module with a forward method
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.Threshold.html
+  title: Threshold
+  section: Threshold > torch.nn.modules.activation.Threshold
+  snippet: 'class torch.nn.modules.activation.Threshold(threshold, value, inplace=False) Thresholds each
+    element of the input Tensor. Threshold is defined as: $y = \begin{cases} x, &\text{ if } x > \text{threshold}
+    \\ \text{value}, ...'
+  grade: 0
+- id: r13
+  query: Conv2d padding='same' with dilation greater than 1
+  url: https://docs.pytorch.org/tutorials/intermediate/custom_function_conv_bn_tutorial.html
+  title: Fusing Convolution and Batch Norm using Custom Function
+  section: Fusing Convolution and Batch Norm using Custom Function
+  snippet: For simplicity, in this tutorial we hardcode bias=False, stride=1, padding=0, dilation=1, and
+    groups=1 for Conv2D. For BatchNorm2D, we hardcode eps=1e-3, momentum=0.1, affine=False, and track_running_statistics=False.
+    An...
+  grade: 0
+- id: r14
+  query: how to make cuDNN convolutions deterministic and what performance and error behavior to expect
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.Conv2d.html
+  title: Conv2d
+  section: Conv2d > torch.nn.Conv2d
+  snippet: In other words, for an input of size $(N, C_{in}, L_{in})$, a depthwise convolution with a
+    depthwise multiplier K can be performed with the arguments $(C_\text{in}=C_\text{in}, C_\text{out}=C_\text{in}
+    \times \text{K}, ....
+  grade: 0
+- id: r15
+  query: what is a graph break in torch.compile and why does it hurt performance
+  url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/compile/programming_model.dynamo_core_concepts.html
+  title: Dynamo Core Concepts
+  section: Dynamo Core Concepts
+  snippet: 'Summary: - Dynamo, torch.compile’s frontend, performs tracing to capture the semantics of
+    a Python function (and its nested function calls) into a linear sequence of operations (the “(FX)
+    graph”), residual bytecode, and ...'
+  grade: 0
+- id: r16
+  query: run a training script across multiple GPUs with DistributedDataParallel from scratch
+  url: https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html
+  title: Automatic Mixed Precision
+  section: Automatic Mixed Precision > Advanced topics
+  snippet: 'See the Automatic Mixed Precision Examples for advanced use cases including: - Gradient accumulation
+    - Gradient penalty/double backward - Networks with multiple models, optimizers, or losses - Multiple
+    GPUs (torch.nn.Dat...'
+  grade: 1
+- id: r17
+  query: which optimizers support the foreach and fused implementations and how do I turn them off
+  url: https://docs.pytorch.org/tutorials/intermediate/torchrec_intro_tutorial.html
+  title: Introduction to TorchRec
+  section: Introduction to TorchRec > Adding an Optimizer to EmbeddingBagCollection
+  snippet: 'We will do this in two ways, which are equivalent, but give you options depending on your
+    preferences: 1. Passing optimizer kwargs through fused_params in sharder. 2. Through apply_optimizer_in_backward,
+    which converts t...'
+  grade: 0
+- id: r18
+  query: step by step training loop for an image classifier on FashionMNIST
+  url: https://docs.pytorch.org/tutorials/intermediate/tensorboard_tutorial.html
+  title: Visualizing Models, Data, and Training with TensorBoard
+  section: Visualizing Models, Data, and Training with TensorBoard
+  snippet: '```python # imports import matplotlib.pyplot as plt import numpy as np import torch import
+    torchvision import torchvision.transforms as transforms import torch.nn as nn import torch.nn.functional
+    as F import torch.optim ...'
+  grade: 0
+- id: r19
+  query: default eps value in torch.optim.Adam
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.SparseAdam.html
+  title: SparseAdam
+  section: SparseAdam > torch.optim.SparseAdam
+  snippet: '- betas (Tuple[float, float], optional) – coefficients used for computing running averages
+    of gradient and its square (default: (0.9, 0.999)) - eps (float, optional) – term added to the denominator
+    to improve numerical s...'
+  grade: 0
+- id: r20
+  query: walk me through saving and loading a checkpoint so I can resume training
+  url: https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html
+  title: Training with PyTorch
+  section: The Training Loop > Per-Epoch Activity
+  snippet: 'There are a couple of things we’ll want to do once per epoch: - Perform validation by checking
+    our relative loss on a set of data that was not used for training, and report this - Save a copy of
+    the model Here, we’ll do ...'
+  grade: 1
+- id: r21
+  query: does DataLoader copy the dataset into each worker process and how do I seed numpy correctly in
+    workers
+  url: https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html
+  title: Performance Tuning Guide
+  section: General optimizations > Enable asynchronous data loading and augmentation
+  snippet: torch.utils.data.DataLoader supports asynchronous data loading and data augmentation in separate
+    worker subprocesses. The default setting for DataLoader is num_workers=0, which means that the data
+    loading is synchronous ...
+  grade: 1
+- id: r22
+  query: why does calling backward twice raise an error about the graph being freed
+  url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/compile/programming_model.nested_graph_breaks.html
+  title: Nested Graph Breaks
+  section: Nested Graph Breaks
+  snippet: 'Summary: - Graph breaks in nested functions can result in hard-to-understand compiler behavior,
+    which we document below - A nested graph break results in $\mathcal O(N)$ duplicate graph break behavior
+    Recall that when to...'
+  grade: 0
+- id: r23
+  query: how to make cuDNN convolutions deterministic and what performance and error behavior to expect
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.conv3d.html
+  title: torch.conv3d
+  section: torch.conv3d > torch.conv3d
+  snippet: torch.conv3d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1) → Tensor
+    Applies a 3D convolution over an input image composed of several input planes. This operator supports
+    TensorFloat32. See Conv3d f...
+  grade: 0
+- id: r24
+  query: how do I write a custom Dataset class and use it with DataLoader
+  url: https://docs.pytorch.org/tutorials/beginner/introyt/introyt1_tutorial.html
+  title: Introduction to PyTorch
+  section: Introduction to PyTorch > Datasets and Dataloaders
+  snippet: '```python trainset = torchvision.datasets.CIFAR10(root=''./data'', train=True, download=True,
+    transform=transform) ``` Note: When you run the cell above, it may take a little time for the dataset
+    to download. This is an ex...'
+  grade: 1
+- id: r25
+  query: how to make cuDNN convolutions deterministic and what performance and error behavior to expect
+  url: https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html
+  title: Automatic Mixed Precision
+  section: Troubleshooting > Speedup with Amp is minor
+  snippet: 1. Your network may fail to saturate the GPU(s) with work, and is therefore CPU bound. Amp’s
+    effect on GPU performance won’t matter. - A rough rule of thumb to saturate the GPU is to increase
+    batch and/or network size(s)...
+  grade: 0
+- id: r26
+  query: how to log training curves to TensorBoard from PyTorch
+  url: https://docs.pytorch.org/tutorials/intermediate/ax_multiobjective_nas_tutorial.html
+  title: Multi-Objective NAS with Ax
+  section: Multi-Objective NAS with Ax > Setting up Metrics
+  snippet: '```python from ax.metrics.tensorboard import TensorboardMetric from tensorboard.backend.event_processing
+    import plugin_event_multiplexer as event_multiplexer class MyTensorboardMetric(TensorboardMetric):
+    # NOTE: We need ...'
+  grade: 1
+- id: r27
+  query: how do I set the random seed for CPU and every GPU at once
+  url: https://docs.pytorch.org/docs/2.14/cuda.html
+  title: torch.cuda
+  section: torch.cuda > Random Number Generator
+  snippet: '| get_rng_state | Return the random number generator state of the specified GPU as a ByteTensor.
+    | | get_rng_state_all | Return a list of ByteTensor representing the random number states of all devices.
+    | | set_rng_state...'
+  grade: 1
+- id: r28
+  query: how do I profile my training loop to find what is slow
+  url: https://docs.pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
+  title: Optimizing Model Parameters
+  section: Optimizing Model Parameters > Optimization Loop
+  snippet: 'Once we set our hyperparameters, we can then train and optimize our model with an optimization
+    loop. Each iteration of the optimization loop is called an epoch. Each epoch consists of two main
+    parts: - The Train Loop - i...'
+  grade: 0
+- id: r29
+  query: example of building a neural network by subclassing nn.Module with a forward method
+  url: https://docs.pytorch.org/tutorials/advanced/cpp_frontend.html
+  title: Using the PyTorch C++ Frontend
+  section: Defining the Neural Network Models > Module API Basics
+  snippet: In line with the Python interface, neural networks based on the C++ frontend are composed of
+    reusable building blocks called modules. There is a base module class from which all other modules
+    are derived. In Python, this...
+  grade: 1
+- id: r30
+  query: does DataLoader copy the dataset into each worker process and how do I seed numpy correctly in
+    workers
+  url: https://docs.pytorch.org/docs/2.14/notes/cuda.html
+  title: CUDA semantics
+  section: Best practices > Use pinned memory buffers
+  snippet: '``` This is an advanced tip. If you overuse pinned memory, it can cause serious problems when
+    running low on RAM, and you should be aware that pinning is often an expensive operation. ``` Host
+    to GPU copies are much fast...'
+  grade: 0
+- id: r31
+  query: when does autograd complain that a variable needed for gradient computation was modified in-place
+  url: https://docs.pytorch.org/tutorials/intermediate/custom_function_double_backward_tutorial.html
+  title: Double Backward with Custom Functions
+  section: Double Backward with Custom Functions
+  snippet: It is sometimes useful to run backwards twice through backward graph, for example to compute
+    higher-order gradients. It takes an understanding of autograd and some care to support double backwards,
+    however. Functions tha...
+  grade: 0
+- id: r32
+  query: how are gradients defined for complex-valued tensors in PyTorch
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.autograd.gradcheck.gradcheck.html
+  title: torch.autograd.gradcheck.gradcheck
+  section: torch.autograd.gradcheck.gradcheck > torch.autograd.gradcheck.gradcheck
+  snippet: torch.autograd.gradcheck.gradcheck(func, inputs, *, eps=1e-06, atol=1e-05, rtol=0.001, raise_exception=True,
+    nondet_tol=0.0, check_undefined_grad=True, check_grad_dtypes=False, check_batched_grad=False, check_batched_for...
+  grade: 0
+- id: r33
+  query: what does contiguous mean for a tensor and when do I need to call .contiguous()
+  url: https://docs.pytorch.org/tutorials/intermediate/memory_format_tutorial.html
+  title: Channels Last Memory Format in PyTorch
+  section: Channels Last Memory Format in PyTorch > Memory Format API
+  snippet: 'Out: ``` True ``` There are minor difference between the two APIs to and contiguous. We suggest
+    to stick with to when explicitly converting memory format of tensor. For general cases the two APIs
+    behave the same. However...'
+  grade: 1
+- id: r34
+  query: how to log training curves to TensorBoard from PyTorch
+  url: https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html
+  title: Training with PyTorch
+  section: The Training Loop > Per-Epoch Activity
+  snippet: 'There are a couple of things we’ll want to do once per epoch: - Perform validation by checking
+    our relative loss on a set of data that was not used for training, and report this - Save a copy of
+    the model Here, we’ll do ...'
+  grade: 0
+- id: r35
+  query: how to make cuDNN convolutions deterministic and what performance and error behavior to expect
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.ConvTranspose3d.html
+  title: ConvTranspose3d
+  section: ConvTranspose3d > torch.nn.ConvTranspose3d
+  snippet: 'Note: In some circumstances when given tensors on a CUDA device and using CuDNN, this operator
+    may select a nondeterministic algorithm to increase performance. If this is undesirable, you can try
+    to make the operation de...'
+  grade: 2
+- id: r36
+  query: difference between torch.no_grad and torch.inference_mode
+  url: https://docs.pytorch.org/docs/2.14/torch.html
+  title: torch
+  section: torch > Locally disabling gradient computation
+  snippet: The context managers torch.no_grad(), torch.enable_grad(), and torch.set_grad_enabled() are
+    helpful for locally disabling and enabling gradient computation. See Locally disabling gradient computation
+    for more details on ...
+  grade: 2
+- id: r37
+  query: function that returns the indices of the k largest values along a dimension
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.cummax.html
+  title: torch.cummax
+  section: torch.cummax > torch.cummax
+  snippet: torch.cummax(input, dim, *, out=None) Returns a namedtuple (values, indices) where values is
+    the cumulative maximum of elements of input in the dimension dim. And indices is the index location
+    of each maximum value found...
+  grade: 0
+- id: r38
+  query: why does calling backward twice raise an error about the graph being freed
+  url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/compile/programming_model.common_graph_breaks.html
+  title: Common Graph Breaks
+  section: Common Graph Breaks > Printing and logging
+  snippet: Printing/logging/issuing warnings will result in a graph break. You can try working around
+    this by using torch._dynamo.config.reorderable_logging_functions. This config is used to reorder logging
+    functions so that they a...
+  grade: 0
+- id: r39
+  query: which optimizers support the foreach and fused implementations and how do I turn them off
+  url: https://docs.pytorch.org/docs/2.14/distributed.optim.html
+  title: Distributed Optimizers
+  section: Distributed Optimizers > torch.distributed.optim.ZeroRedundancyOptimizer
+  snippet: 'Warning: If you pass overlap_with_ddp=True, be wary of the following: Given the way that overlapping
+    DistributedDataParallel with ZeroRedundancyOptimizer is currently implemented, the first two or three
+    training iteratio...'
+  grade: 0
+- id: r40
+  query: difference between torch.no_grad and torch.inference_mode
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.NAdam.html
+  title: NAdam
+  section: torch.optim.NAdam > torch.optim.NAdam.zero_grad
+  snippet: 'zero_grad(set_to_none=True) Reset the gradients of all optimized torch.Tensor s. Parameters:
+    set_to_none (bool, optional) – Instead of setting to zero, set the grads to None. Default: True This
+    will in general have lower...'
+  grade: 0

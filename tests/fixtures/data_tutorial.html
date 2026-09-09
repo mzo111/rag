@@ -1,0 +1,257 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Datasets & DataLoaders — PyTorch Tutorials 2.14.0+cu130 documentation</title></head><body><article class="bd-article">
+<div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-beginner-basics-data-tutorial-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code.</p>
+</div>
+<p class="sphx-glr-example-title" id="sphx-glr-beginner-basics-data-tutorial-py"><a class="reference external" href="intro.html">Learn the Basics</a> ||
+<a class="reference external" href="quickstart_tutorial.html">Quickstart</a> ||
+<a class="reference external" href="tensorqs_tutorial.html">Tensors</a> ||
+<strong>Datasets &amp; DataLoaders</strong> ||
+<a class="reference external" href="transforms_tutorial.html">Transforms</a> ||
+<a class="reference external" href="buildmodel_tutorial.html">Build Model</a> ||
+<a class="reference external" href="autogradqs_tutorial.html">Autograd</a> ||
+<a class="reference external" href="optimization_tutorial.html">Optimization</a> ||
+<a class="reference external" href="saveloadrun_tutorial.html">Save &amp; Load Model</a></p>
+<section id="datasets-dataloaders">
+<h1>Datasets &amp; DataLoaders<a class="headerlink" href="#datasets-dataloaders" title="Link to this heading">#</a></h1><p class="date-info-last-verified" style="color: #6c6c6d; font-size: small;">Created On: Feb 09, 2021 | Last Updated: May 07, 2026 | Last Verified: Nov 05, 2024</p>
+<p>Code for processing data samples can get messy and hard to maintain; we ideally want our dataset code
+to be decoupled from our model training code for better readability and modularity.
+PyTorch provides two data primitives: <code class="docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code> and <code class="docutils literal notranslate"><span class="pre">torch.utils.data.Dataset</span></code>
+that allow you to use pre-loaded datasets as well as your own data.
+<code class="docutils literal notranslate"><span class="pre">Dataset</span></code> stores the samples and their corresponding labels, and <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> wraps an iterable around
+the <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> to enable easy access to the samples.</p>
+<p>PyTorch domain libraries provide a number of pre-loaded datasets (such as FashionMNIST) that
+subclass <code class="docutils literal notranslate"><span class="pre">torch.utils.data.Dataset</span></code> and implement functions specific to the particular data.
+They can be used to prototype and benchmark your model. You can find them
+here: <a class="reference external" href="https://pytorch.org/vision/stable/datasets.html">Image Datasets</a>,
+<a class="reference external" href="https://pytorch.org/text/stable/datasets.html">Text Datasets</a>, and
+<a class="reference external" href="https://pytorch.org/audio/stable/datasets.html">Audio Datasets</a></p>
+<section id="loading-a-dataset">
+<h2>Loading a Dataset<a class="headerlink" href="#loading-a-dataset" title="Link to this heading">#</a></h2>
+<p>Here is an example of how to load the <a class="reference external" href="https://research.zalando.com/project/fashion_mnist/fashion_mnist/">Fashion-MNIST</a> dataset from TorchVision.
+Fashion-MNIST is a dataset of Zalando’s article images consisting of 60,000 training examples and 10,000 test examples.
+Each example comprises a 28×28 grayscale image and an associated label from one of 10 classes.</p>
+<dl class="simple">
+<dt>We load the <a class="reference external" href="https://pytorch.org/vision/stable/datasets.html#fashion-mnist">FashionMNIST Dataset</a> with the following parameters:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">root</span></code> is the path where the train/test data is stored,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">train</span></code> specifies training or test dataset,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">download=True</span></code> downloads the data from the internet if it’s not available at <code class="docutils literal notranslate"><span class="pre">root</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">transform</span></code> and <code class="docutils literal notranslate"><span class="pre">target_transform</span></code> specify the feature and label transformations</p></li>
+</ul>
+</dd>
+</dl>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <a class="sphx-glr-backref-module-torch-utils-data sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset" title="torch.utils.data.Dataset"><span class="n">Dataset</span></a>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">v2</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+
+<a class="sphx-glr-backref-module-torchvision-datasets sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html#torchvision.datasets.FashionMNIST" title="torchvision.datasets.FashionMNIST"><span class="n">training_data</span></a> <span class="o">=</span> <a class="sphx-glr-backref-module-torchvision-datasets sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html#torchvision.datasets.FashionMNIST" title="torchvision.datasets.FashionMNIST"><span class="n">datasets</span><span class="o">.</span><span class="n">FashionMNIST</span></a><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="s2">"data"</span><span class="p">,</span>
+    <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">transform</span><span class="o">=</span><a class="sphx-glr-backref-module-torchvision-transforms-v2 sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.v2.Compose.html#torchvision.transforms.v2.Compose" title="torchvision.transforms.v2.Compose"><span class="n">v2</span><span class="o">.</span><span class="n">Compose</span></a><span class="p">([</span><a class="sphx-glr-backref-module-torchvision-transforms-v2 sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.v2.ToImage.html#torchvision.transforms.v2.ToImage" title="torchvision.transforms.v2.ToImage"><span class="n">v2</span><span class="o">.</span><span class="n">ToImage</span></a><span class="p">(),</span> <a class="sphx-glr-backref-module-torchvision-transforms-v2 sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.v2.ToDtype.html#torchvision.transforms.v2.ToDtype" title="torchvision.transforms.v2.ToDtype"><span class="n">v2</span><span class="o">.</span><span class="n">ToDtype</span></a><span class="p">(</span><a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.dtype" title="torch.dtype"><span class="n">torch</span><span class="o">.</span><span class="n">float32</span></a><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="kc">True</span><span class="p">)])</span>
+<span class="p">)</span>
+
+<a class="sphx-glr-backref-module-torchvision-datasets sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html#torchvision.datasets.FashionMNIST" title="torchvision.datasets.FashionMNIST"><span class="n">test_data</span></a> <span class="o">=</span> <a class="sphx-glr-backref-module-torchvision-datasets sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html#torchvision.datasets.FashionMNIST" title="torchvision.datasets.FashionMNIST"><span class="n">datasets</span><span class="o">.</span><span class="n">FashionMNIST</span></a><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="s2">"data"</span><span class="p">,</span>
+    <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">transform</span><span class="o">=</span><a class="sphx-glr-backref-module-torchvision-transforms-v2 sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.v2.Compose.html#torchvision.transforms.v2.Compose" title="torchvision.transforms.v2.Compose"><span class="n">v2</span><span class="o">.</span><span class="n">Compose</span></a><span class="p">([</span><a class="sphx-glr-backref-module-torchvision-transforms-v2 sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.v2.ToImage.html#torchvision.transforms.v2.ToImage" title="torchvision.transforms.v2.ToImage"><span class="n">v2</span><span class="o">.</span><span class="n">ToImage</span></a><span class="p">(),</span> <a class="sphx-glr-backref-module-torchvision-transforms-v2 sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.v2.ToDtype.html#torchvision.transforms.v2.ToDtype" title="torchvision.transforms.v2.ToDtype"><span class="n">v2</span><span class="o">.</span><span class="n">ToDtype</span></a><span class="p">(</span><a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.dtype" title="torch.dtype"><span class="n">torch</span><span class="o">.</span><span class="n">float32</span></a><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="kc">True</span><span class="p">)])</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>  0%|          | 0.00/26.4M [00:00&lt;?, ?B/s]
+  0%|          | 65.5k/26.4M [00:00&lt;01:09, 377kB/s]
+  1%|          | 229k/26.4M [00:00&lt;00:37, 706kB/s]
+  3%|▎         | 918k/26.4M [00:00&lt;00:11, 2.18MB/s]
+ 14%|█▍        | 3.67M/26.4M [00:00&lt;00:03, 7.52MB/s]
+ 37%|███▋      | 9.73M/26.4M [00:00&lt;00:00, 17.3MB/s]
+ 59%|█████▉    | 15.5M/26.4M [00:01&lt;00:00, 22.7MB/s]
+ 81%|████████  | 21.4M/26.4M [00:01&lt;00:00, 26.2MB/s]
+100%|██████████| 26.4M/26.4M [00:01&lt;00:00, 20.0MB/s]
+
+  0%|          | 0.00/29.5k [00:00&lt;?, ?B/s]
+100%|██████████| 29.5k/29.5k [00:00&lt;00:00, 338kB/s]
+
+  0%|          | 0.00/4.42M [00:00&lt;?, ?B/s]
+  1%|▏         | 65.5k/4.42M [00:00&lt;00:11, 373kB/s]
+  5%|▌         | 229k/4.42M [00:00&lt;00:05, 703kB/s]
+ 21%|██        | 918k/4.42M [00:00&lt;00:01, 2.17MB/s]
+ 82%|████████▏ | 3.64M/4.42M [00:00&lt;00:00, 8.17MB/s]
+100%|██████████| 4.42M/4.42M [00:00&lt;00:00, 6.28MB/s]
+
+  0%|          | 0.00/5.15k [00:00&lt;?, ?B/s]
+100%|██████████| 5.15k/5.15k [00:00&lt;00:00, 43.7MB/s]
+</pre></div>
+</div>
+</section>
+<section id="iterating-and-visualizing-the-dataset">
+<h2>Iterating and Visualizing the Dataset<a class="headerlink" href="#iterating-and-visualizing-the-dataset" title="Link to this heading">#</a></h2>
+<p>We can index <code class="docutils literal notranslate"><span class="pre">Datasets</span></code> manually like a list: <code class="docutils literal notranslate"><span class="pre">training_data[index]</span></code>.
+We use <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> to visualize some samples in our training data.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">labels_map</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">0</span><span class="p">:</span> <span class="s2">"T-Shirt"</span><span class="p">,</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="s2">"Trouser"</span><span class="p">,</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="s2">"Pullover"</span><span class="p">,</span>
+    <span class="mi">3</span><span class="p">:</span> <span class="s2">"Dress"</span><span class="p">,</span>
+    <span class="mi">4</span><span class="p">:</span> <span class="s2">"Coat"</span><span class="p">,</span>
+    <span class="mi">5</span><span class="p">:</span> <span class="s2">"Sandal"</span><span class="p">,</span>
+    <span class="mi">6</span><span class="p">:</span> <span class="s2">"Shirt"</span><span class="p">,</span>
+    <span class="mi">7</span><span class="p">:</span> <span class="s2">"Sneaker"</span><span class="p">,</span>
+    <span class="mi">8</span><span class="p">:</span> <span class="s2">"Bag"</span><span class="p">,</span>
+    <span class="mi">9</span><span class="p">:</span> <span class="s2">"Ankle Boot"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">figure</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">cols</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cols</span> <span class="o">*</span> <span class="n">rows</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">sample_idx</span> <span class="o">=</span> <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-function" href="https://docs.pytorch.org/docs/stable/generated/torch.randint.html#torch.randint" title="torch.randint"><span class="n">torch</span><span class="o">.</span><span class="n">randint</span></a><span class="p">(</span><span class="nb">len</span><span class="p">(</span><a class="sphx-glr-backref-module-torchvision-datasets sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html#torchvision.datasets.FashionMNIST" title="torchvision.datasets.FashionMNIST"><span class="n">training_data</span></a><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">img</span></a><span class="p">,</span> <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a> <span class="o">=</span> <a class="sphx-glr-backref-module-torchvision-datasets sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html#torchvision.datasets.FashionMNIST" title="torchvision.datasets.FashionMNIST"><span class="n">training_data</span></a><span class="p">[</span><span class="n">sample_idx</span><span class="p">]</span>
+    <span class="n">figure</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">labels_map</span><span class="p">[</span><a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">"off"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">img</span></a><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="Pullover, T-Shirt, Dress, Shirt, Trouser, T-Shirt, Dress, Sandal, Shirt" class="sphx-glr-single-img" src="../../_images/sphx_glr_data_tutorial_001.png" srcset="../../_images/sphx_glr_data_tutorial_001.png"/><hr class="docutils"/>
+</section>
+<section id="creating-a-custom-dataset-for-your-files">
+<h2>Creating a Custom Dataset for your files<a class="headerlink" href="#creating-a-custom-dataset-for-your-files" title="Link to this heading">#</a></h2>
+<p>A custom Dataset class must implement three functions: <cite>__init__</cite>, <cite>__len__</cite>, and <cite>__getitem__</cite>.
+Take a look at this implementation; the FashionMNIST images are stored
+in a directory <code class="docutils literal notranslate"><span class="pre">img_dir</span></code>, and their labels are stored separately in a CSV file <code class="docutils literal notranslate"><span class="pre">annotations_file</span></code>.</p>
+<p>In the next sections, we’ll break down what’s happening in each of these functions.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision.io</span><span class="w"> </span><span class="kn">import</span> <a class="sphx-glr-backref-module-torchvision-io sphx-glr-backref-type-py-function" href="https://docs.pytorch.org/vision/stable/generated/torchvision.io.decode_image.html#torchvision.io.decode_image" title="torchvision.io.decode_image"><span class="n">decode_image</span></a>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomImageDataset</span><span class="p">(</span><a class="sphx-glr-backref-module-torch-utils-data sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset" title="torch.utils.data.Dataset"><span class="n">Dataset</span></a><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">annotations_file</span><span class="p">,</span> <span class="n">img_dir</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_transform</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">img_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">annotations_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">img_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">transform</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_transform</span> <span class="o">=</span> <span class="n">target_transform</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img_labels</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="n">img_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">img_labels</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">image</span> <span class="o">=</span> <a class="sphx-glr-backref-module-torchvision-io sphx-glr-backref-type-py-function" href="https://docs.pytorch.org/vision/stable/generated/torchvision.io.decode_image.html#torchvision.io.decode_image" title="torchvision.io.decode_image"><span class="n">decode_image</span></a><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
+        <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">img_labels</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">:</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_transform</span><span class="p">:</span>
+            <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_transform</span><span class="p">(</span><a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a><span class="p">)</span>
+        <span class="k">return</span> <span class="n">image</span><span class="p">,</span> <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a>
+</pre></div>
+</div>
+<section id="init">
+<h3><code class="docutils literal notranslate"><span class="pre">__init__</span></code><a class="headerlink" href="#init" title="Link to this heading">#</a></h3>
+<p>The __init__ function is run once when instantiating the Dataset object. We initialize
+the directory containing the images, the annotations file, and both transforms (covered
+in more detail in the next section).</p>
+<p>The labels.csv file looks like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tshirt1</span><span class="o">.</span><span class="n">jpg</span><span class="p">,</span> <span class="mi">0</span>
+<span class="n">tshirt2</span><span class="o">.</span><span class="n">jpg</span><span class="p">,</span> <span class="mi">0</span>
+<span class="o">......</span>
+<span class="n">ankleboot999</span><span class="o">.</span><span class="n">jpg</span><span class="p">,</span> <span class="mi">9</span>
+</pre></div>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">annotations_file</span><span class="p">,</span> <span class="n">img_dir</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_transform</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">img_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">annotations_file</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">img_dir</span> <span class="o">=</span> <span class="n">img_dir</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">transform</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">target_transform</span> <span class="o">=</span> <span class="n">target_transform</span>
+</pre></div>
+</div>
+</section>
+<section id="len">
+<h3><code class="docutils literal notranslate"><span class="pre">__len__</span></code><a class="headerlink" href="#len" title="Link to this heading">#</a></h3>
+<p>The __len__ function returns the number of samples in our dataset.</p>
+<p>Example:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img_labels</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="getitem">
+<h3><code class="docutils literal notranslate"><span class="pre">__getitem__</span></code><a class="headerlink" href="#getitem" title="Link to this heading">#</a></h3>
+<p>The __getitem__ function loads and returns a sample from the dataset at the given index <code class="docutils literal notranslate"><span class="pre">idx</span></code>.
+Based on the index, it identifies the image’s location on disk, converts that to a tensor using <code class="docutils literal notranslate"><span class="pre">decode_image</span></code>, retrieves the
+corresponding label from the csv data in <code class="docutils literal notranslate"><span class="pre">self.img_labels</span></code>, calls the transform functions on them (if applicable), and returns the
+tensor image and corresponding label in a tuple.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+    <span class="n">img_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">img_labels</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">image</span> <span class="o">=</span> <a class="sphx-glr-backref-module-torchvision-io sphx-glr-backref-type-py-function" href="https://docs.pytorch.org/vision/stable/generated/torchvision.io.decode_image.html#torchvision.io.decode_image" title="torchvision.io.decode_image"><span class="n">decode_image</span></a><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
+    <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">img_labels</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">:</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_transform</span><span class="p">:</span>
+        <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_transform</span><span class="p">(</span><a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a><span class="p">)</span>
+    <span class="k">return</span> <span class="n">image</span><span class="p">,</span> <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a>
+</pre></div>
+</div>
+<hr class="docutils"/>
+</section>
+</section>
+<section id="preparing-your-data-for-training-with-dataloaders">
+<h2>Preparing your data for training with DataLoaders<a class="headerlink" href="#preparing-your-data-for-training-with-dataloaders" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> retrieves our dataset’s features and labels one sample at a time. While training a model, we typically want to
+pass samples in “minibatches”, reshuffle the data at every epoch to reduce model overfitting, and use Python’s <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> to
+speed up data retrieval.</p>
+<p><code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> is an iterable that abstracts this complexity for us in an easy API.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <a class="sphx-glr-backref-module-torch-utils-data sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="torch.utils.data.DataLoader"><span class="n">DataLoader</span></a>
+
+<a class="sphx-glr-backref-module-torch-utils-data sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="torch.utils.data.DataLoader"><span class="n">train_dataloader</span></a> <span class="o">=</span> <a class="sphx-glr-backref-module-torch-utils-data sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="torch.utils.data.DataLoader"><span class="n">DataLoader</span></a><span class="p">(</span><a class="sphx-glr-backref-module-torchvision-datasets sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html#torchvision.datasets.FashionMNIST" title="torchvision.datasets.FashionMNIST"><span class="n">training_data</span></a><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a class="sphx-glr-backref-module-torch-utils-data sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="torch.utils.data.DataLoader"><span class="n">test_dataloader</span></a> <span class="o">=</span> <a class="sphx-glr-backref-module-torch-utils-data sphx-glr-backref-type-py-class" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="torch.utils.data.DataLoader"><span class="n">DataLoader</span></a><span class="p">(</span><a class="sphx-glr-backref-module-torchvision-datasets sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html#torchvision.datasets.FashionMNIST" title="torchvision.datasets.FashionMNIST"><span class="n">test_data</span></a><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="iterate-through-the-dataloader">
+<h2>Iterate through the DataLoader<a class="headerlink" href="#iterate-through-the-dataloader" title="Link to this heading">#</a></h2>
+<p>We have loaded that dataset into the <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> and can iterate through the dataset as needed.
+Each iteration below returns a batch of <code class="docutils literal notranslate"><span class="pre">train_features</span></code> and <code class="docutils literal notranslate"><span class="pre">train_labels</span></code> (containing <code class="docutils literal notranslate"><span class="pre">batch_size=64</span></code> features and labels respectively).
+Because we specified <code class="docutils literal notranslate"><span class="pre">shuffle=True</span></code>, after we iterate over all batches the data is shuffled (for finer-grained control over
+the data loading order, take a look at <a class="reference external" href="https://pytorch.org/docs/stable/data.html#data-loading-order-and-sampler">Samplers</a>).</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display image and label.</span>
+<a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">train_features</span></a><span class="p">,</span> <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">train_labels</span></a> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><a class="sphx-glr-backref-module-torch-utils-data sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader" title="torch.utils.data.DataLoader"><span class="n">train_dataloader</span></a><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Feature batch shape: </span><span class="si">{</span><a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">train_features</span></a><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Labels batch shape: </span><span class="si">{</span><a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">train_labels</span></a><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">img</span></a> <span class="o">=</span> <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">train_features</span></a><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+<a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a> <span class="o">=</span> <a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">train_labels</span></a><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">img</span></a><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Label: </span><span class="si">{</span><a class="sphx-glr-backref-module-torch sphx-glr-backref-type-py-class sphx-glr-backref-instance" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">label</span></a><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="data tutorial" class="sphx-glr-single-img" src="../../_images/sphx_glr_data_tutorial_002.png" srcset="../../_images/sphx_glr_data_tutorial_002.png"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Feature batch shape: torch.Size([64, 1, 28, 28])
+Labels batch shape: torch.Size([64])
+Label: 0
+</pre></div>
+</div>
+<hr class="docutils"/>
+</section>
+<section id="further-reading">
+<h2>Further Reading<a class="headerlink" href="#further-reading" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pytorch.org/docs/stable/data.html">torch.utils.data API</a></p></li>
+</ul>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 4.863 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-beginner-basics-data-tutorial-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/36608d2d57f623ba3a623e0c947a8c3e/data_tutorial.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">data_tutorial.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/56e3f440fc204e02856f8889c226d2d1/data_tutorial.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">data_tutorial.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-zip docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/89855d8fec84a240291d4492f4ece548/data_tutorial.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">zipped:</span> <span class="pre">data_tutorial.zip</span></code></a></p>
+</div>
+</div>
+</section>
+</section>
+</article></body></html>

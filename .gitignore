@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.venv/
+data/raw/
+data/*.db
+data/*.db-journal
+data/*.jsonl
+data/dense/

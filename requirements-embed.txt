@@ -1,0 +1,4 @@
+# Dense retrieval only (retrieval/dense.py). Kept out of requirements.txt because it pulls
+# in torch (~800MB CPU / ~2.5GB CUDA), which CI does not need: the dense tests inject a
+# numpy-only fake encoder. Install with: pip install -r requirements-embed.txt
+sentence-transformers

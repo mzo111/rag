@@ -1,0 +1,67 @@
+{
+ "pages": 3684,
+ "pages_without_chunks": 6,
+ "chunks": 11832,
+ "tokens": 2266488,
+ "tokens_per_chunk": {
+  "mean": 191.6,
+  "p5": 18,
+  "p25": 80,
+  "p50": 178,
+  "p75": 297,
+  "p95": 410,
+  "max": 512
+ },
+ "histogram": [
+  {
+   "range": "0-49",
+   "count": 1645
+  },
+  {
+   "range": "50-99",
+   "count": 2033
+  },
+  {
+   "range": "100-149",
+   "count": 1435
+  },
+  {
+   "range": "150-199",
+   "count": 1450
+  },
+  {
+   "range": "200-249",
+   "count": 1227
+  },
+  {
+   "range": "250-299",
+   "count": 1180
+  },
+  {
+   "range": "300-349",
+   "count": 1948
+  },
+  {
+   "range": "350-399",
+   "count": 296
+  },
+  {
+   "range": "400-449",
+   "count": 121
+  },
+  {
+   "range": "450-511",
+   "count": 488
+  },
+  {
+   "range": "512+",
+   "count": 9
+  }
+ ],
+ "params": {
+  "target_tokens": 350,
+  "max_tokens": 512,
+  "min_tokens": 40,
+  "tokenizer": "tiktoken cl100k_base"
+ }
+}

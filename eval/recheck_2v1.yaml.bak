@@ -1,0 +1,376 @@
+# Blind re-grade set - fill in every `grade:`, then score with eval/recheck_2v1_key.yaml.
+#
+#   2 = directly answers the query (the page you would send someone to)
+#   1 = partially answers, or is useful context / answers a sub-part
+#   0 = not relevant
+#
+# Every entry here was graded once before. The point is to measure how repeatable your own
+# judgments are, so grade each one fresh: do not look these pages up in pool.yaml,
+# pool_delta.yaml, queries.yaml or regrade_ones.yaml first, and do not open the key file
+# until you are done.
+#
+# The two halves are matched on snippet, title and section length, so entry length carries no
+# usable information about the earlier verdict. 0 is a legitimate answer even though no entry
+# here previously held it - grade what the page is, not what you think the set contains.
+seed: 91357
+n: 40
+entries:
+- id: s01
+  query: how are gradients defined for complex-valued tensors in PyTorch
+  url: https://docs.pytorch.org/docs/2.14/autograd.html
+  title: Automatic differentiation package - torch.autograd
+  section: Automatic differentiation package - torch.autograd > Numerical gradient checking
+  snippet: '| gradcheck | Check gradients computed via small finite differences against analytical gradients
+    wrt tensors in inputs that are of floating point or complex type and with requires_grad=True. | |
+    gradgradcheck | Check gra...'
+  grade: null
+- id: s02
+  query: can torch.compile trace through a custom autograd.Function and what are the restrictions
+  url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_backward.html
+  title: torch.compile has different autograd semantics
+  section: torch.compile has different autograd semantics
+  snippet: When you apply torch.compile to a function in your model’s forward pass, it will automatically
+    generate a backward pass for the compiled function. During compilation, it will trace out a graph
+    for the backward pass that ...
+  grade: null
+- id: s03
+  query: how are gradients defined for complex-valued tensors in PyTorch
+  url: https://docs.pytorch.org/tutorials/beginner/examples_nn/polynomial_nn.html
+  title: 'PyTorch: nn'
+  section: 'PyTorch: nn'
+  snippet: A third order polynomial, trained to predict \(y=\sin(x)\) from \(-\pi\) to \(\pi\) by minimizing
+    squared Euclidean distance. This implementation uses the nn package from PyTorch to build the network.
+    PyTorch autograd ma...
+  grade: null
+- id: s04
+  query: what is a graph break in torch.compile and why does it hurt performance
+  url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/compile/programming_model.fullgraph_true.html
+  title: Use fullgraph=True to Identify and Eliminate Graph Breaks
+  section: Use fullgraph=True to Identify and Eliminate Graph Breaks
+  snippet: 'Using torch.compile(fullgraph=False) (the default) is a good way to get started with torch.compile:
+    it supports all Python programs out-of-the-box via the ability to graph break and gives good performance
+    on common cases...'
+  grade: null
+- id: s05
+  query: torch.compile mode='reduce-overhead' what does it do
+  url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_troubleshooting.html
+  title: torch.compile Troubleshooting
+  section: Reporting Issues > Ablation
+  snippet: 'Check which component of the torch.compile stack is the one causing the issue using the backend=
+    option for torch.compile. In particular, try: - torch.compile(fn, backend="eager"), which only runs
+    TorchDynamo, the graph ...'
+  grade: null
+- id: s06
+  query: how are gradients defined for complex-valued tensors in PyTorch
+  url: https://docs.pytorch.org/docs/2.14/complex_numbers.html
+  title: Complex Numbers
+  section: Complex Numbers > Autograd
+  snippet: PyTorch supports autograd for complex tensors. The gradient computed is the Conjugate Wirtinger
+    derivative, the negative of which is precisely the direction of steepest descent used in Gradient
+    Descent algorithm. Thus, a...
+  grade: null
+- id: s07
+  query: can torch.compile trace through a custom autograd.Function and what are the restrictions
+  url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_custom_backends.html
+  title: Custom Backends
+  section: Custom Backends > Overview
+  snippet: 'torch.compile provides a straightforward method to enable users to define custom backends.
+    A backend function has the contract (gm: torch.fx.GraphModule, example_inputs: List[torch.Tensor])
+    -> Callable. Backend functions...'
+  grade: null
+- id: s08
+  query: Tensor.scatter_ signature and the reduce options it accepts
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.scatter_.html
+  title: torch.Tensor.scatter_
+  section: torch.Tensor.scatter_ > torch.Tensor.scatter_
+  snippet: Additionally accepts an optional reduce argument that allows specification of an optional reduction
+    operation, which is applied to all values in the tensor src into self at the indices specified in
+    the index. For each va...
+  grade: null
+- id: s09
+  query: does view share memory with the original tensor and how is that different from reshape
+  url: https://docs.pytorch.org/tutorials/beginner/nlp/pytorch_tutorial.html
+  title: Introduction to PyTorch
+  section: Introduction to Torch’s tensor library > Reshaping Tensors
+  snippet: Use the .view() method to reshape a tensor. This method receives heavy use, because many neural
+    network components expect their inputs to have a certain shape. Often you will need to reshape before
+    passing your data to t...
+  grade: null
+- id: s10
+  query: what does contiguous mean for a tensor and when do I need to call .contiguous()
+  url: https://docs.pytorch.org/docs/2.14/tensor_view.html
+  title: Tensor Views
+  section: Tensor Views
+  snippet: '```python >>> base = torch.tensor([[0, 1],[2, 3]]) >>> base.is_contiguous() True >>> t = base.transpose(0,
+    1) # `t` is a view of `base`. No data movement happened here. # View tensors might be non-contiguous.
+    >>> t.is_co...'
+  grade: null
+- id: s11
+  query: walk me through saving and loading a checkpoint so I can resume training
+  url: https://docs.pytorch.org/tutorials/beginner/distributed_training_with_ray_tutorial.html
+  title: Distributed training at scale with PyTorch and Ray Train
+  section: Distributed training at scale with PyTorch and Ray Train > Fault tolerance
+  snippet: Long-running distributed training jobs are vulnerable to hardware failures. These include hardware
+    failures, network failures, or preemption. Without fault tolerance, any of these events can force
+    you to restart training...
+  grade: null
+- id: s12
+  query: which optimizers support the foreach and fused implementations and how do I turn them off
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.sgd.sgd_function.html
+  title: torch.optim.sgd.sgd
+  section: torch.optim.sgd.sgd > torch.optim.sgd.sgd
+  snippet: torch.optim.sgd.sgd(params, d_p_list, momentum_buffer_list, has_sparse_grad=False, foreach=None,
+    fused=None, grad_scale=None, found_inf=None, *, weight_decay, momentum, lr, dampening, nesterov, maximize)
+    Functional API t...
+  grade: null
+- id: s13
+  query: quantize a trained model for faster CPU inference
+  url: https://docs.pytorch.org/docs/2.14/quantization-support.html
+  title: Quantization API Reference
+  section: Quantization API Reference > torch.ao.quantization.quantize_fx
+  snippet: '| prepare_fx | Prepare a model for post training quantization | | prepare_qat_fx | Prepare
+    a model for quantization aware training | | convert_fx | Convert a calibrated or trained model to
+    a quantized model | | fuse_fx |...'
+  grade: null
+- id: s14
+  query: how do FSDP and DDP differ in the way they shard parameters, gradients and optimizer state
+  url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_faq.html
+  title: Frequently Asked Questions
+  section: Frequently Asked Questions > Do you support Distributed code?
+  snippet: torch.compile supports DistributedDataParallel (DDP). Support for other distributed training
+    libraries is being considered. The main reason why Distributed code is challenging with dynamo is
+    because AOTAutograd unrolls b...
+  grade: null
+- id: s15
+  query: what is a graph break in torch.compile and why does it hurt performance
+  url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/compile/programming_model.fullgraph_false.html
+  title: Working with fullgraph=False
+  section: Working with fullgraph=False
+  snippet: While fullgraph=False is the default torch.compile setting, the semantics of resuming compilation
+    upon encountering a graph break are more complicated. You can find details on the fullgraph=False
+    semantics in the subsect...
+  grade: null
+- id: s16
+  query: when does autograd complain that a variable needed for gradient computation was modified in-place
+  url: https://docs.pytorch.org/docs/2.14/notes/extending.html
+  title: Extending PyTorch
+  section: Extending torch.autograd > How to use
+  snippet: '- setup_context() (optional). One can either write a “combined” forward() that accepts a ctx
+    object or (as of PyTorch 2.0) a separate forward() that does not accept ctx and a setup_context()
+    method where the ctx modifica...'
+  grade: null
+- id: s17
+  query: how to make cuDNN convolutions deterministic and what performance and error behavior to expect
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.conv1d.html
+  title: torch.conv1d
+  section: torch.conv1d > torch.conv1d
+  snippet: torch.conv1d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1) → Tensor
+    Applies a 1D convolution over an input signal composed of several input planes. This operator supports
+    TensorFloat32. See Conv1d ...
+  grade: null
+- id: s18
+  query: difference between scatter_reduce, index_add_ and index_reduce_ and which reductions each supports
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.index_reduce_.html
+  title: torch.Tensor.index_reduce_
+  section: torch.Tensor.index_reduce_ > torch.Tensor.index_reduce_
+  snippet: '- source (FloatTensor) – the tensor containing values to accumulate - reduce (str) – the reduction
+    operation to apply ("prod", "mean", "amax", "amin") Keyword Arguments: include_self (bool) – whether
+    the elements from th...'
+  grade: null
+- id: s19
+  query: DataLoader num_workers persistent_workers prefetch_factor meaning
+  url: https://docs.pytorch.org/tutorials/intermediate/intermediate_data_loading_tutorial.html
+  title: Data Loading Optimization in PyTorch
+  section: Data Loading Optimization in PyTorch > Persistent Workers
+  snippet: By default, worker processes are shut down and restarted between epochs. This incurs startup
+    overhead (importing modules, forking processes, re-initializing datasets) on every epoch boundary.
+    Setting persistent_workers=T...
+  grade: null
+- id: s20
+  query: nn.Module.register_forward_hook with_kwargs and always_call parameters
+  url: https://docs.pytorch.org/tutorials/recipes/recipes/reasoning_about_shapes.html
+  title: Reasoning about Shapes in PyTorch
+  section: Reasoning about Shapes in PyTorch
+  snippet: '```python def fw_hook(module, input, output): print(f"Shape of output to {module} is {output.shape}.")
+    # Any tensor created within this torch.device context manager will be # on the meta device. with torch.device("meta")...'
+  grade: null
+- id: s21
+  query: torch.load weights_only default and how to allowlist custom classes
+  url: https://docs.pytorch.org/docs/2.14/notes/serialization.html
+  title: Serialization semantics
+  section: torch.load with weights_only=True > weights_only allowlist
+  snippet: As mentioned above, saving a module’s state_dict is a best practice when using torch.save.
+    If loading an old checkpoint that contains an nn.Module, we recommend weights_only=False. When loading
+    a checkpoint that contains...
+  grade: null
+- id: s22
+  query: what dtype does autocast use on CPU versus CUDA and how do I use it together with GradScaler
+  url: https://docs.pytorch.org/docs/2.14/notes/amp_examples.html
+  title: Automatic Mixed Precision examples
+  section: Automatic Mixed Precision examples
+  snippet: Ordinarily, “automatic mixed precision training” means training with torch.autocast and torch.amp.GradScaler
+    together. Instances of torch.autocast enable autocasting for chosen regions. Autocasting automatically
+    chooses ...
+  grade: null
+- id: s23
+  query: difference between torch.no_grad and torch.inference_mode
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.MultiheadAttention.html
+  title: MultiheadAttention
+  section: MultiheadAttention > torch.nn.MultiheadAttention
+  snippet: class torch.nn.MultiheadAttention(embed_dim, num_heads, dropout=0.0, bias=True, add_bias_kv=False,
+    add_zero_attn=False, kdim=None, vdim=None, batch_first=False, device=None, dtype=None) Allows the
+    model to jointly attend...
+  grade: null
+- id: s24
+  query: how are gradients defined for complex-valued tensors in PyTorch
+  url: https://docs.pytorch.org/docs/2.14/notes/autograd.html
+  title: Autograd mechanics
+  section: Autograd mechanics > Autograd for Complex Numbers
+  snippet: 'The short version: - When you use PyTorch to differentiate any function $f(z)$ with complex
+    domain and/or codomain, the gradients are computed under the assumption that the function is a part
+    of a larger real-valued loss...'
+  grade: null
+- id: s25
+  query: how do FSDP and DDP differ in the way they shard parameters, gradients and optimizer state
+  url: https://docs.pytorch.org/tutorials/intermediate/FSDP_tutorial.html
+  title: Getting Started with Fully Sharded Data Parallel (FSDP2)
+  section: Getting Started with Fully Sharded Data Parallel (FSDP2) > How FSDP2 works
+  snippet: In DistributedDataParallel (DDP) training, each rank owns a model replica and processes a batch
+    of data, finally it uses all-reduce to sync gradients across ranks. Comparing with DDP, FSDP reduces
+    GPU memory footprint by...
+  grade: null
+- id: s26
+  query: run a training script across multiple GPUs with DistributedDataParallel from scratch
+  url: https://docs.pytorch.org/tutorials/intermediate/ddp_tutorial.html
+  title: Getting Started with Distributed Data Parallel
+  section: Getting Started with Distributed Data Parallel
+  snippet: 'Author: Shen Li Edited by: Joe Zhu, Chirag Pandya Note: View and edit this tutorial in github.
+    Prerequisites: - PyTorch Distributed Overview - DistributedDataParallel API documents - DistributedDataParallel
+    notes Distrib...'
+  grade: null
+- id: s27
+  query: walk me through saving and loading a checkpoint so I can resume training
+  url: https://docs.pytorch.org/tutorials/beginner/ddp_series_fault_tolerance.html
+  title: Fault-tolerant Distributed Training with torchrun
+  section: Fault-tolerant Distributed Training with torchrun > Saving and loading snapshots
+  snippet: 'Regularly storing all the relevant information in snapshots allows our training job to seamlessly
+    resume after an interruption. ```diff + def _save_snapshot(self, epoch): + snapshot = {} + snapshot["MODEL_STATE"]
+    = self....'
+  grade: null
+- id: s28
+  query: default eps value in torch.optim.Adam
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.adam.adam_function.html
+  title: torch.optim.adam.adam
+  section: torch.optim.adam.adam > torch.optim.adam.adam
+  snippet: torch.optim.adam.adam(params, grads, exp_avgs, exp_avg_sqs, max_exp_avg_sqs, state_steps, foreach=None,
+    capturable=False, differentiable=False, fused=None, grad_scale=None, found_inf=None, has_complex=False,
+    decoupled_we...
+  grade: null
+- id: s29
+  query: difference between scatter_reduce, index_add_ and index_reduce_ and which reductions each supports
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.scatter_reduce_.html
+  title: torch.Tensor.scatter_reduce_
+  section: torch.Tensor.scatter_reduce_ > torch.Tensor.scatter_reduce_
+  snippet: '- dim (int) – the axis along which to index - index (LongTensor) – the indices of elements
+    to scatter and reduce. - src (Tensor) – the source elements to scatter and reduce - reduce (str) –
+    the reduction operation to app...'
+  grade: null
+- id: s30
+  query: Conv2d padding='same' with dilation greater than 1
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.functional.conv2d.html
+  title: torch.nn.functional.conv2d
+  section: torch.nn.functional.conv2d > torch.nn.functional.conv2d
+  snippet: '- padding – implicit paddings on both sides of the input. Can be a string {‘valid’, ‘same’},
+    single number or a tuple (padH, padW). Default: 0 padding=''valid'' is the same as no padding. padding=''same''
+    pads the input so t...'
+  grade: null
+- id: s31
+  query: torch.einsum equation syntax with ellipsis
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.einsum.html
+  title: torch.einsum
+  section: torch.einsum > torch.einsum
+  snippet: Ellipsis (’…’) can be used in place of subscripts to broadcast the dimensions covered by the
+    ellipsis. Each input operand may contain at most one ellipsis which will cover the dimensions not
+    covered by subscripts, e.g. f...
+  grade: null
+- id: s32
+  query: step by step training loop for an image classifier on FashionMNIST
+  url: https://docs.pytorch.org/tutorials/beginner/introyt/tensorboardyt_tutorial.html
+  title: PyTorch TensorBoard Support
+  section: PyTorch TensorBoard Support > Showing Images in TensorBoard
+  snippet: '```python # Gather datasets and prepare them for consumption transform = v2.Compose([ v2.ToImage(),
+    v2.ToDtype(torch.float32, scale=True), v2.Normalize((0.5,), (0.5,))]) # Store separate training and
+    validations splits i...'
+  grade: null
+- id: s33
+  query: torch.einsum equation syntax with ellipsis
+  url: https://docs.pytorch.org/tutorials/recipes/recipes/defining_a_neural_network.html
+  title: Defining a Neural Network in PyTorch
+  section: Steps > 4. [Optional] Pass data through your model to test
+  snippet: 'To ensure we receive our desired output, let’s test our model by passing some random data
+    through it. ```python # Equates to one random 28x28 image random_data = torch.rand((1, 1, 28, 28))
+    my_nn = Net() result = my_nn(ra...'
+  grade: null
+- id: s34
+  query: example of building a neural network by subclassing nn.Module with a forward method
+  url: https://docs.pytorch.org/tutorials/recipes/recipes/zeroing_out_gradients.html
+  title: Zeroing out gradients in PyTorch
+  section: Steps > 3. Build the neural network
+  snippet: 'We will use a convolutional neural network. To learn more see the Defining a Neural Network
+    recipe. ```python class Net(nn.Module): def __init__(self): super(Net, self).__init__() self.conv1
+    = nn.Conv2d(3, 6, 5) self.poo...'
+  grade: null
+- id: s35
+  query: torch.compile mode='reduce-overhead' what does it do
+  url: https://docs.pytorch.org/tutorials/recipes/torch_compile_torch_function_modes.html
+  title: (beta) Utilizing Torch Function modes with torch.compile
+  section: (beta) Utilizing Torch Function modes with torch.compile
+  snippet: 'Author: Michael Lazos This recipe covers how to use a key torch extensibility point, torch
+    function modes, in tandem with torch.compile to override the behavior of torch operators, also know
+    as ops, at trace time, with n...'
+  grade: null
+- id: s36
+  query: torch.compile mode='reduce-overhead' what does it do
+  url: https://docs.pytorch.org/tutorials/intermediate/torch_compile_full_example.html
+  title: torch.compile End-to-End Tutorial
+  section: torch.compile End-to-End Tutorial
+  snippet: And indeed, we can see that running our model with torch.compile results in a significant speedup.
+    Speedup mainly comes from reducing Python overhead and GPU read/writes, and so the observed speedup
+    may vary on factors s...
+  grade: null
+- id: s37
+  query: getting started with torch.export to export a model
+  url: https://docs.pytorch.org/docs/2.14/onnx_export.html
+  title: torch.export-based ONNX Exporter
+  section: API Reference > torch.onnx.export
+  snippet: torch.onnx.export(model, args=(), f=None, *, kwargs=None, verbose=None, input_names=None, output_names=None,
+    opset_version=None, dynamo=True, external_data=True, dynamic_shapes=None, custom_translation_table=None,
+    report...
+  grade: null
+- id: s38
+  query: nn.Module.register_forward_hook with_kwargs and always_call parameters
+  url: https://docs.pytorch.org/tutorials/intermediate/visualizing_gradients_tutorial.html
+  title: Visualizing Gradients
+  section: Visualizing Gradients > Registering hooks
+  snippet: '```python # note that wrapper functions are used for Python closure # so that we can pass
+    arguments. def hook_forward(module_name, grads, hook_backward): def hook(module, args, output): """Forward
+    pass hook which attache...'
+  grade: null
+- id: s39
+  query: torch.load weights_only default and how to allowlist custom classes
+  url: https://docs.pytorch.org/docs/2.14/miscellaneous_environment_variables.html
+  title: Miscellaneous Environment Variables
+  section: Miscellaneous Environment Variables
+  snippet: '| Variable | Description | | TORCH_FORCE_WEIGHTS_ONLY_LOAD | If set to [1, y, yes, true],
+    the torch.load will use weights_only=True. This will happen even if weights_only=False was passed
+    at the callsite. For more docume...'
+  grade: null
+- id: s40
+  query: what does contiguous mean for a tensor and when do I need to call .contiguous()
+  url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.view.html
+  title: torch.Tensor.view
+  section: torch.Tensor.view > torch.Tensor.view
+  snippet: Tensor.view(*shape) → Tensor Returns a new tensor with the same data as the self tensor but
+    of a different shape. The returned tensor shares the same data and must have the same number of elements,
+    but may have a differe...
+  grade: null
