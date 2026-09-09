@@ -2,23 +2,29 @@
 
 Retrieval over PyTorch's documentation, built in order: corpus, then measurement, then
 retrievers. The evaluation set was written before any retriever existed so nothing could be
-tuned against it. **The relevance judgments are still blank** and are the next thing needed.
+tuned against it. All 40 queries are now judged by hand: **814 relevance judgments**,
+pooled in three rounds (BM25, then dense, then the agent re-pool).
 
 ```
-corpus/fetch.py   download docs (stable = 2.14.0) + tutorials HTML -> data/raw/ (gitignored)
-corpus/chunk.py   HTML -> text -> chunks (pure, unit-tested)      -> data/chunks.jsonl
-corpus/quality.py alias-page and deprecated-stub detection (pure)
-corpus/store.py   SQLite + FTS5 schema and idempotent loader       -> data/corpus.db
-retrieval/bm25.py BM25 baseline over the FTS5 index
-eval/queries.yaml 40 queries, relevance judgments to be filled in by hand
-eval/metrics.py   recall@k, MRR, nDCG@10 (pure functions, hand-computed tests)
-eval/run.py       harness: any object with search(query, k) -> metrics table
-eval/pool.py      build a judging pool from retriever output, merge grades back
-agent/graph.py    decompose/route state graph, RRF fusion over sub-query results
-agent/llm.py      Ollama HTTP client + committed on-disk response cache
-agent/prompts.py  the two prompts, first draft, frozen
-agent/run.py      run the agent over the query set: routes, fallbacks, latency split
-agent/coverage.py how much of what the agent retrieves has never been judged
+corpus/fetch.py     download docs (stable = 2.14.0) + tutorials HTML -> data/raw/ (gitignored)
+corpus/chunk.py     HTML -> text -> chunks (pure, unit-tested)        -> data/chunks.jsonl
+corpus/quality.py   alias-page and deprecated-stub detection (pure)
+corpus/store.py     SQLite + FTS5 schema and idempotent loader         -> data/corpus.db
+retrieval/bm25.py   BM25 baseline over the FTS5 index
+retrieval/dense.py  dense retrieval: gte-modernbert-base embeddings + flat index
+retrieval/hybrid.py reciprocal rank fusion over BM25 + dense (k = 60, untuned)
+retrieval/rerank.py cross-encoder reranker over any first-stage retriever's top N
+eval/queries.yaml   40 queries + 814 hand-written relevance judgments
+eval/metrics.py     recall@k, MRR, nDCG@10 (pure functions, hand-computed tests)
+eval/run.py         harness: any object with search(query, k) -> metrics table
+eval/pool.py        build a judging pool from retriever output, merge/append grades back
+eval/paired.py      paired bootstrap: every system scored on one shared judgment draw
+eval/GRADING.md     the written grading rubric
+agent/graph.py      decompose/route state graph, RRF fusion over sub-query results
+agent/llm.py        Ollama HTTP client + committed on-disk response cache
+agent/prompts.py    the two prompts, first draft, frozen
+agent/run.py        run the agent over the query set: routes, fallbacks, latency split
+agent/coverage.py   how much of what the agent retrieves has never been judged
 ```
 
 ## Setup
@@ -228,8 +234,9 @@ Results are in the table below.
 ## Evaluation
 
 `eval/queries.yaml` holds 40 queries in four categories: `api_lookup` (12), `conceptual` (10),
-`multi_hop` (8), `tutorial` (10). All 40 are now judged by hand — 400 judgments, 10 per query,
-294 of them relevant (159 at grade 1, 135 at grade 2). See the header of the file for the grade
+`multi_hop` (8), `tutorial` (10). All 40 are judged by hand — **814 judgments** over three
+pooling rounds, 465 of them relevant (303 at grade 1, 162 at grade 2), a mean of 20.4 judged
+and 11.6 relevant pages per query. See the header of the file for the grade
 scale (0/1/2) and the judgment unit (page URL, optionally narrowed with `anchor`; no judgment
 uses an anchor yet, so every unit is currently a page). The harness treats unjudged pages as
 grade 0.
@@ -259,61 +266,103 @@ grade only the candidates that are new. Pages you know are relevant should be ad
 
 ## Results
 
-Run 2026-09-08 against `data/corpus.db` (11,832 chunks / 3,678 pages), 40 queries, **611
-judgments** — the original 400 from the BM25 pool plus 211 appended from the dense delta pool.
-392 are relevant (grade > 0), a mean of 9.8 relevant pages per query. `k=10`.
+Run 2026-09-09 against `data/corpus.db` (11,832 chunks / 3,678 pages), 40 queries, **814
+judgments** — the 400 from the BM25 pool, 211 from the dense delta pool, and 203 from the
+agent re-pool (`eval/pool_agent.yaml`). 465 are relevant (grade > 0), a mean of 11.6 relevant
+pages per query. `k=10`.
 
-| retriever | group | R@5 | of ceiling | R@10 | of ceiling | MRR | nDCG@10 (95% CI) |
+**Every number below moved when the pool grew, so this table replaces the 611-judgment one
+rather than extending it.** No retriever changed and no ranking changed; the denominators did.
+
+| retriever | group | R@5 | of ceiling | R@10 | of ceiling | MRR | nDCG@10 (resampled 95% CI) |
 |---|---|---:|---:|---:|---:|---:|---|
-| random (seed 0) | all | 0.015 | 0.03 | 0.027 | 0.03 | 0.056 | 0.02 [0.01, 0.03] |
-| | api_lookup | 0.032 | 0.04 | 0.042 | 0.04 | 0.079 | |
-| | conceptual | 0.017 | 0.03 | 0.033 | 0.04 | 0.084 | |
-| | multi_hop | 0.000 | 0.00 | 0.011 | 0.01 | 0.018 | |
-| | tutorial | 0.007 | 0.02 | 0.014 | 0.02 | 0.031 | |
-| **bm25** | **all** | **0.448** | **0.81** | **0.772** | **0.84** | **0.988** | **0.82 [0.58, 0.72]** |
-| | api_lookup | 0.536 | 0.72 | 0.858 | 0.87 | 1.000 | |
-| | conceptual | 0.432 | 0.81 | 0.745 | 0.78 | 1.000 | |
-| | multi_hop | 0.430 | 0.90 | 0.724 | 0.79 | 1.000 | |
-| | tutorial | 0.373 | 0.90 | 0.736 | 0.90 | 0.950 | |
-| **dense** | **all** | **0.423** | **0.76** | **0.677** | **0.73** | **0.988** | **0.78 [0.56, 0.69]** |
-| | api_lookup | 0.474 | 0.64 | 0.642 | 0.65 | 0.958 | |
-| | conceptual | 0.412 | 0.77 | 0.626 | 0.66 | 1.000 | |
-| | multi_hop | 0.413 | 0.87 | 0.769 | 0.83 | 1.000 | |
-| | tutorial | 0.381 | 0.92 | 0.696 | 0.85 | 1.000 | |
-| **hybrid** (RRF) | **all** | **0.449** | **0.81** | **0.718** | **0.78** | **0.971** | **0.83 [0.56, 0.72]** |
-| | api_lookup | 0.552 | 0.75 | 0.753 | 0.76 | 0.944 | |
-| | conceptual | 0.410 | 0.77 | 0.692 | 0.73 | 1.000 | |
-| | multi_hop | 0.430 | 0.90 | 0.730 | 0.79 | 1.000 | |
-| | tutorial | 0.381 | 0.92 | 0.693 | 0.85 | 0.950 | |
-| rerank(bm25) | all | 0.432 | 0.78 | 0.625 | 0.68 | 0.975 | 0.76 [0.50, 0.65] |
-| | api_lookup | 0.540 | 0.73 | 0.743 | 0.75 | 1.000 | |
-| | conceptual | 0.393 | 0.74 | 0.640 | 0.67 | 1.000 | |
-| | multi_hop | 0.452 | 0.95 | 0.621 | 0.67 | 0.938 | |
-| | tutorial | 0.324 | 0.78 | 0.472 | 0.58 | 0.950 | |
-| rerank(hybrid) | all | 0.432 | 0.78 | 0.630 | 0.68 | 0.975 | 0.76 [0.50, 0.66] |
-| | api_lookup | 0.549 | 0.74 | 0.707 | 0.72 | 1.000 | |
-| | conceptual | 0.395 | 0.74 | 0.643 | 0.68 | 1.000 | |
-| | multi_hop | 0.438 | 0.92 | 0.652 | 0.71 | 0.938 | |
-| | tutorial | 0.323 | 0.78 | 0.505 | 0.62 | 0.950 | |
+| random (seed 0) | all | 0.016 | 0.03 | 0.025 | 0.03 | 0.064 | 0.02 [0.00, 0.04] |
+|  | api_lookup | 0.031 | 0.05 | 0.039 | 0.04 | 0.079 |  |
+|  | conceptual | 0.020 | 0.05 | 0.037 | 0.04 | 0.118 |  |
+|  | multi_hop | 0.000 | 0.00 | 0.010 | 0.01 | 0.018 |  |
+|  | tutorial | 0.005 | 0.01 | 0.010 | 0.01 | 0.031 |  |
+| **bm25** | **all** | **0.392** | **0.80** | **0.675** | **0.81** | **0.988** | **0.80 [0.51, 0.69]** |
+|  | api_lookup | 0.508 | 0.74 | 0.808 | 0.83 | 1.000 |  |
+|  | conceptual | 0.355 | 0.79 | 0.618 | 0.75 | 1.000 |  |
+|  | multi_hop | 0.337 | 0.90 | 0.569 | 0.76 | 1.000 |  |
+|  | tutorial | 0.333 | 0.89 | 0.657 | 0.90 | 0.950 |  |
+| **dense** | **all** | **0.371** | **0.76** | **0.588** | **0.71** | **0.988** | **0.76 [0.49, 0.66]** |
+|  | api_lookup | 0.439 | 0.64 | 0.589 | 0.60 | 0.958 |  |
+|  | conceptual | 0.352 | 0.78 | 0.538 | 0.65 | 1.000 |  |
+|  | multi_hop | 0.324 | 0.87 | 0.603 | 0.80 | 1.000 |  |
+|  | tutorial | 0.347 | 0.93 | 0.627 | 0.86 | 1.000 |  |
+| **hybrid** (RRF) | **all** | **0.396** | **0.81** | **0.664** | **0.80** | **0.971** | **0.83 [0.52, 0.71]** |
+|  | api_lookup | 0.520 | 0.75 | 0.720 | 0.74 | 0.944 |  |
+|  | conceptual | 0.345 | 0.76 | 0.661 | 0.80 | 1.000 |  |
+|  | multi_hop | 0.337 | 0.90 | 0.605 | 0.81 | 1.000 |  |
+|  | tutorial | 0.346 | 0.93 | 0.647 | 0.88 | 0.950 |  |
+| rerank(bm25) | all | 0.381 | 0.78 | 0.562 | 0.68 | 0.975 | 0.76 [0.45, 0.64] |
+|  | api_lookup | 0.498 | 0.72 | 0.699 | 0.72 | 1.000 |  |
+|  | conceptual | 0.337 | 0.75 | 0.542 | 0.66 | 1.000 |  |
+|  | multi_hop | 0.365 | 0.97 | 0.518 | 0.69 | 0.938 |  |
+|  | tutorial | 0.295 | 0.79 | 0.451 | 0.62 | 0.950 |  |
+| rerank(hybrid) | all | 0.382 | 0.78 | 0.558 | 0.67 | 0.975 | 0.75 [0.45, 0.64] |
+|  | api_lookup | 0.508 | 0.74 | 0.663 | 0.68 | 1.000 |  |
+|  | conceptual | 0.338 | 0.75 | 0.543 | 0.66 | 1.000 |  |
+|  | multi_hop | 0.365 | 0.97 | 0.534 | 0.71 | 0.938 |  |
+|  | tutorial | 0.287 | 0.77 | 0.467 | 0.64 | 0.950 |  |
+| **agent/hybrid** | **all** | **0.380** | **0.78** | **0.634** | **0.76** | **0.954** | **0.79 [0.50, 0.69]** |
+|  | api_lookup | 0.477 | 0.69 | 0.702 | 0.72 | 0.903 |  |
+|  | conceptual | 0.351 | 0.78 | 0.607 | 0.74 | 1.000 |  |
+|  | multi_hop | 0.312 | 0.83 | 0.549 | 0.73 | 1.000 |  |
+|  | tutorial | 0.346 | 0.93 | 0.647 | 0.88 | 0.933 |  |
 
-**Read recall against its ceiling, not against 1.0.** With 9.8 relevant pages per query on
-average, five slots cannot hold them all: the achievable recall@5 is 0.555 overall (0.741 for
-`api_lookup`, down to 0.415 for `tutorial`, which now averages 12.3 relevant pages). The
-"of ceiling" columns are the fraction of what was reachable. BM25 at 0.448 raw is 0.81 of
-ceiling; its weakest category by raw recall (`tutorial`, 0.373) is among its strongest once
-the ceiling is applied (0.90).
+**Read recall against its ceiling, not against 1.0.** With 11.6 relevant pages per query on
+average, five slots cannot hold them all: the achievable recall@5 is 0.488 overall (0.690 for
+`api_lookup`, down to 0.372 for `tutorial` and 0.375 for `multi_hop`). The "of ceiling"
+columns are the fraction of what was reachable.
 
-**BM25's recall@10 fell from 1.000 to 0.772. That is the pooling bias being corrected, not a
-regression.** The retriever did not change and its rankings are identical. The earlier 1.000
-was an artifact: every judgment came from BM25's own top 10, so BM25 could not miss anything
-that existed. The pool now also contains dense-only pages that BM25 does not retrieve, and
-those are exactly the misses the old number could not see. A drop here is the measurement
-starting to work.
+**Raw recall@5 fell for every system, and that is the pool growing, not the retrievers
+regressing.** BM25 went 0.448 → 0.392 and hybrid 0.449 → 0.396 without a single ranking
+changing: the re-pool added 203 judgments, 73 of them relevant, so the denominator of recall
+grew while five slots stayed five. The of-ceiling column is the one that is comparable across
+pool sizes, and there BM25 is flat (0.81 → 0.80) and hybrid is flat (0.81 → 0.81). This is
+the same effect as BM25's R@10 falling from 1.000 to 0.772 when the dense delta landed, and
+it has the same reading: the measurement is working.
 
-Dense scores below BM25 on this judgment set (R@5 0.423 vs 0.448, R@10 0.677 vs 0.772), but
-the comparison is still tilted — see limitation 1. It leads on `multi_hop` recall@10 (0.769 vs
-0.724) and on `tutorial` of-ceiling recall@5 (0.92 vs 0.90), the two categories where queries
-describe a task rather than name a symbol.
+**nDCG is quoted as the observed value with the resampled interval beside it, to two decimals
+and no more.** For every system the observed value sits *above* the top of its own resampled
+interval — that is limitation 3, unchanged by this round: re-grading would not scatter nDCG
+around its current value, it would move it down. Ranking conclusions rest on recall against
+ceiling, not on this column.
+
+Dense still scores below BM25 (R@5 0.371 vs 0.392, R@10 0.588 vs 0.675). It keeps its lead on
+`tutorial` of-ceiling recall@5 (0.93 vs 0.89) and on `multi_hop` of-ceiling recall@10 (0.80 vs
+0.76), the two categories where queries describe a task rather than name a symbol.
+
+### Pool coverage after the re-pool
+
+The re-pool was meant to close the unjudged hole under the agent *and* under the hybrid, whose
+published numbers had been running through a 10.5% hole. It did:
+
+| system | unjudged @ 611 | unjudged @ 814 | new pages the re-pool absorbed |
+|---|---:|---:|---:|
+| bm25 | 0.0% | 0.0% | 0 |
+| dense | 0.0% | 0.0% | 0 |
+| **hybrid** | **10.5%** | **0.0%** | 40 |
+| **agent/hybrid** | **20.0%** | **0.0%** | 75 |
+| rerank(bm25) | 28.2% | 23.8% | 99 |
+| rerank(hybrid) | 26.3% | 22.8% | 95 |
+| random (seed 0) | 98.2% | 97.2% | 300 |
+
+Per category the closure is complete for both pooled systems — agent/hybrid's worst category
+was `multi_hop` at 30.0% unjudged, now 0.0%. **The four systems the re-pool was built from
+(agent/bm25, agent/dense, agent/hybrid, hybrid) are now at 0% by construction, exactly as
+BM25 and dense have been since the first round.**
+
+**The rerankers are now the systems with a hole.** They were never pooled: they reorder a
+top-100 that no pool ever saw, so they can promote a page into the top 10 that nothing has
+graded. 23.8% and 22.8% of what they return is unjudged and is scored as grade 0. The
+re-pool cut that only incidentally (95–99 of their unjudged pages happened to be pooled for
+another system). **The reranking conclusions below are therefore the least trustworthy in
+this README**, and in the direction of understating the rerankers.
+
+Random's 97.2% is the control: it says what an unpooled system looks like.
 
 ### Hybrid: reciprocal rank fusion
 
@@ -334,24 +383,30 @@ them at once. `eval/paired.py` exploits this — per bootstrap draw it resamples
 **once** and scores every system against that same resampled set, so shared error cancels in
 the difference. 4,000 draws, Dirichlet transition rows, queries resampled with replacement.
 
-The design works. Paired intervals are 2.2–3.0× narrower than naively combining two marginals:
+The design works. Paired intervals are 2.6–5.3× narrower than naively combining two marginals:
 
 | comparison | marginal A | marginal B | naive sum | **paired** | shrink |
 |---|---:|---:|---:|---:|---:|
-| hybrid − bm25 | 0.175 | 0.165 | 0.340 | **0.114** | 3.0× |
-| hybrid − dense | 0.175 | 0.163 | 0.338 | **0.121** | 2.8× |
-| bm25 − dense | 0.165 | 0.163 | 0.328 | **0.150** | 2.2× |
-| rerank(hybrid) − hybrid | 0.175 | 0.175 | 0.350 | **0.127** | 2.8× |
-| rerank(bm25) − bm25 | 0.177 | 0.165 | 0.343 | **0.133** | 2.6× |
+| hybrid − bm25 | 0.175 | 0.167 | 0.342 | **0.102** | 3.4× |
+| hybrid − dense | 0.175 | 0.161 | 0.336 | **0.101** | 3.3× |
+| bm25 − dense | 0.167 | 0.161 | 0.328 | **0.127** | 2.6× |
+| rerank(hybrid) − hybrid | 0.168 | 0.175 | 0.343 | **0.112** | 3.1× |
+| rerank(bm25) − bm25 | 0.168 | 0.167 | 0.335 | **0.114** | 2.9× |
+| **agent/hybrid − hybrid** | 0.172 | 0.175 | 0.346 | **0.065** | **5.3×** |
+| agent/hybrid − bm25 | 0.172 | 0.167 | 0.339 | **0.113** | 3.0× |
+
+`agent/hybrid − hybrid` shrinks most because the two systems share a base retriever and agree
+on most queries, so almost everything cancels — which is exactly the case a paired design is
+built for, and it makes that comparison the sharpest test in this README.
 
 **And the answer is still no. Hybrid does not beat either system.** Every paired interval
 crosses zero, on both raw and of-ceiling recall@5, overall and in all four categories:
 
 | comparison | recall@5 raw | recall@5 of ceiling | verdict |
 |---|---|---|---|
-| hybrid − bm25 | +0.014 [−0.044, +0.070] | +0.019 [−0.060, +0.090] | no difference |
-| hybrid − dense | +0.015 [−0.046, +0.075] | +0.020 [−0.055, +0.095] | no difference |
-| bm25 − dense | +0.002 [−0.075, +0.075] | +0.003 [−0.094, +0.099] | no difference |
+| hybrid − bm25 | +0.013 [−0.037, +0.065] | +0.020 [−0.055, +0.090] | no difference |
+| hybrid − dense | +0.013 [−0.036, +0.066] | +0.020 [−0.052, +0.093] | no difference |
+| bm25 − dense | −0.000 [−0.064, +0.062] | +0.001 [−0.092, +0.092] | no difference |
 
 Per-query wins on recall@5, with ties counted rather than split:
 
@@ -363,11 +418,11 @@ Per-query wins on recall@5, with ties counted rather than split:
 
 Hybrid's central estimate is positive against both, and it ties BM25 on 26 of 40 queries —
 consistent with a small real gain, and equally consistent with none. A paired design that
-resolves 2.2–3.0× finer than the marginals still cannot separate these systems, so the honest
+resolves 2.6–3.4× finer than the marginals still cannot separate these systems, so the honest
 reading is that **fusion buys nothing measurable here.** Nothing was adjusted in response:
 no constant search, no depth search, no retriever changes.
 
-MRR is reported as a secondary line only — hybrid − bm25 is +0.028 [−0.063, +0.120]. At 65.7%
+MRR is reported as a secondary line only — hybrid − bm25 is +0.025 [−0.060, +0.118]. At 57.1%
 of judged candidates relevant, MRR is saturated (every system finds *something* relevant at
 rank 1 or 2 on almost every query) and is not expected to discriminate. It doesn't.
 
@@ -424,38 +479,51 @@ Both point estimates are negative on both forms of recall@5:
 
 | comparison | recall@5 raw | recall@5 of ceiling | verdict |
 |---|---|---|---|
-| rerank(hybrid) − hybrid | −0.024 [−0.084, +0.044] | −0.039 [−0.115, +0.049] | no difference |
-| rerank(bm25) − bm25 | −0.016 [−0.079, +0.054] | −0.028 [−0.114, +0.061] | no difference |
+| rerank(hybrid) − hybrid | −0.020 [−0.076, +0.036] | −0.030 [−0.110, +0.052] | no difference |
+| rerank(bm25) − bm25 | −0.009 [−0.064, +0.050] | −0.015 [−0.100, +0.068] | no difference |
 
 Paired intervals still cross zero, so this is not a statistically clean loss. But the
 per-query counts point the same way, and more sharply than the intervals do:
 
 | comparison | wins | losses | ties |
 |---|---:|---:|---:|
-| rerank(hybrid) > hybrid | 6 | **13** | 21 |
-| rerank(bm25) > bm25 | 7 | **15** | 18 |
+| rerank(hybrid) > hybrid | 7 | **11** | 22 |
+| rerank(bm25) > bm25 | 7 | **13** | 20 |
 
-The reranker loses on twice as many queries as it wins. It is worst on `tutorial`
-(rerank(hybrid) − hybrid = −0.076 raw, −0.120 of-ceiling) and roughly neutral on `api_lookup`
+The reranker loses on more queries than it wins. It is worst on `tutorial`
+(rerank(hybrid) − hybrid = −0.071 raw, −0.120 of-ceiling) and roughly neutral on `api_lookup`
 — it damages exactly the task-shaped queries where dense retrieval was contributing most. It
-also drops recall@10 substantially (hybrid 0.718 → 0.630), which is expected: with N=100 the
+also drops recall@10 substantially (hybrid 0.664 → 0.558), which is expected: with N=100 the
 cross-encoder is free to demote a correct page out of the top 10 entirely.
+
+**One caveat is now specific to this comparison.** The paragraph above argues a reranker's
+reordering is fully visible to the pool. That was true when the reranker was reading a pool
+built from its own base; it is only partly true now. The rerankers are the only systems still
+carrying an unjudged hole (23.8% and 22.8%), because they promote from a top-100 no pool has
+ever graded, and every such page scores 0. The re-pool closed hybrid's and the agent's holes
+and left theirs mostly open, so **this section understates the rerankers by an unknown amount
+and is the least trustworthy result in this README.** Closing it needs a pool built from
+rerank output, which has not been done.
 
 Nothing was adjusted in response — no N search, no model search, no base changes. On this
 corpus, at this judgment quality, a cross-encoder costing ~1.8 s per query buys nothing and
-plausibly costs accuracy. The paired design is 2.6–2.8× finer than the marginals here, so
+plausibly costs accuracy. The paired design is 2.9–3.1× finer than the marginals here, so
 this is not merely an underpowered test.
 
 ### Limitations
 
 These are the reasons not to read the table as a clean measurement of retrieval quality.
 
-1. **The pool still favours BM25.** The original 400 judgments came from BM25's top 10 alone;
-   the delta added dense's top 10. Two retrievers is better than one, but BM25 contributed
-   every judgment in the first round and half the second, so a page neither retriever surfaced
-   is still invisible, and BM25 keeps a residual advantage this does not remove. Hybrid fuses exactly the two systems
-   that built the pool, so it can only reorder pages already judged — it gets no credit for
-   finding anything new, because nothing it finds is new by construction.
+1. **The pool favours the four systems that built it.** The 814 judgments came from three
+   rounds: BM25's top 10 (400), dense's top 10 (211), then a joint re-pool of agent/bm25,
+   agent/dense, agent/hybrid and hybrid (203). BM25, dense, hybrid and agent/hybrid now all
+   sit at 0% unjudged, so the head-to-heads between them are no longer confounded by coverage
+   — that was the point of the third round. What remains: BM25 contributed every judgment in
+   the first round and half the second, so it retains a residual advantage in *which* pages
+   exist to be found at all; and a page that none of these six systems ever surfaced is still
+   invisible and will look like a miss forever. **The rerankers were never pooled** and still
+   run through a ~23% unjudged hole, which makes their numbers the least comparable in the
+   table and biases them downward.
 
 2. **The judgments are not reliable at the level the numbers imply.** Two blind re-grade
    probes measured how repeatable the grading is: grade 0 reproduced at 90%, grade 2 at 50%,
@@ -478,11 +546,20 @@ These are the reasons not to read the table as a clean measurement of retrieval 
    independent error, so the true uncertainty is larger than these intervals, probably by a
    lot.
 
-5. **The 159 grade-1 judgments predate the rubric.** They were graded before
+5. **The 203 agent-pool judgments were graded over several review passes, not one sitting.**
+   The earlier 611 were each graded in a single continuous session; these 203 were worked
+   through across multiple passes separated by breaks. A grader's threshold drifts between
+   sittings, and nothing here measures that drift — the re-grade probes were run against the
+   611 and say nothing about within-round consistency for this batch. So the newest 203
+   judgments are plausibly *less* internally consistent than the reliability figures in
+   limitation 2 suggest, and they are exactly the judgments that carry the agent-vs-hybrid
+   comparison.
+
+6. **The 159 grade-1 judgments predate the rubric.** They were graded before
    `eval/GRADING.md` was written and have not been re-graded. `eval/regrade_ones.yaml` is
    built and unfilled. Grade 1 is the least reproducible category, and it is the largest.
 
-6. **nDCG is reported but is not used to rank retrievers.** Its `2^g − 1` gain weights a
+7. **nDCG is reported but is not used to rank retrievers.** Its `2^g − 1` gain weights a
    grade 2 at 3× a grade 1, which amplifies exactly the 1↔2 boundary that reproduces worst
    (50% and 30–45%). It is quoted to two decimals with its interval attached and should not
    be read more precisely than that. Ranking conclusions rest on recall against ceiling.
@@ -590,59 +667,96 @@ three orders of magnitude faster than the one that exists. `wall_seconds` keeps 
 replay cost for anyone who wants it, and `--fresh-timings` takes both halves from one live
 run.
 
-### Judgment coverage: the ablation is not yet interpretable
+### Judgment coverage: closed
 
-The ablation has **not** been run, because scoring the agent against the current judgments
-would mostly measure the pool. `eval/queries.yaml` was pooled from BM25 and dense top-10s, and
-`eval.run` scores anything unjudged as grade 0 — so a perfect page the pool never saw is
-punished, not rewarded. `agent/coverage.py` measures that hole first.
+The ablation could not be read before, because scoring the agent against a pool built from
+BM25 and dense would have measured the pool. `agent/coverage.py` sized that hole: **20.0% of
+the (query, page) pairs the agent returned had never been graded**, 30.0% on `multi_hop`, and
+`eval.run` scores anything unjudged as grade 0. The hybrid was carrying a 10.5% hole of its
+own and had been scored anyway.
 
-Agent over hybrid, `k=10`, against the 611 existing judgments:
+`eval/pool_agent.yaml` pooled the four affected systems in one round — agent/bm25, agent/dense,
+agent/hybrid and plain hybrid — into 203 candidates over 32 queries and 172 distinct pages,
+each with title, section and snippet. It was graded (7 × grade 2, 66 × grade 1, 130 × grade 0)
+and **appended**, not merged:
 
-| group | queries | retrieved | unjudged | rate | distinct pages |
-|---|---|---|---|---|---|
-| all | 40 | 400 | 80 | **20.0%** | 75 |
-| api_lookup | 12 | 120 | 23 | 19.2% | 22 |
-| conceptual | 10 | 100 | 19 | 19.0% | 19 |
-| multi_hop | 8 | 80 | 24 | **30.0%** | 24 |
-| tutorial | 10 | 100 | 14 | 14.0% | 13 |
+```bash
+python -m eval.pool append --pool eval/pool_agent.yaml   # 611 -> 814, backup written
+```
 
-**One in five pages the agent returns has never been graded**, and one in three for
-`multi_hop` — the category decomposition is supposed to help, which is exactly where the
-measurement is least trustworthy. Only 9 of 40 queries are fully covered.
+`append` only ever inserts lines, so all 611 earlier judgments survive byte for byte;
+`merge` would have replaced each query's whole `judgments` block and destroyed them. It also
+refuses to write a url a query already judges, since one page cannot hold two grades.
 
-That 20% is unreadable without a control, so `--baseline` measures the base retriever alone:
+The hole is closed for both target systems, and per category as well as overall:
 
-| retriever | retrieved | unjudged | rate | distinct pages |
+| system | @ 611 | @ 814 | worst category @ 611 | worst @ 814 |
+|---|---:|---:|---|---|
+| **hybrid** | 10.5% | **0.0%** | `api_lookup` 12.5% | 0.0% |
+| **agent/hybrid** | 20.0% | **0.0%** | `multi_hop` 30.0% | 0.0% |
+| rerank(bm25) | 28.2% | 23.8% | `tutorial` 37.0% | `tutorial` 31.0% |
+| rerank(hybrid) | 26.3% | 22.8% | `tutorial` 33.0% | `tutorial` 29.0% |
+
+**The agent and the hybrid now stand where BM25 and dense have stood since round one: 0%
+unjudged, by construction.** The comparison below is no longer measuring pool coverage.
+
+### The ablation: the agent does not beat plain retrieval
+
+Agent over hybrid, `k=10`, 814 judgments, paired against its own base and against BM25:
+
+| comparison | recall@5 raw | recall@5 of ceiling | verdict |
+|---|---|---|---|
+| **agent/hybrid − hybrid** | **−0.009 [−0.042, +0.023]** | **−0.020 [−0.076, +0.038]** | no difference |
+| agent/hybrid − bm25 | +0.004 [−0.053, +0.061] | −0.000 [−0.085, +0.080] | no difference |
+
+Both intervals cross zero, so neither is a statistically clean loss. But the point estimate
+against the base it is built on is **negative**, and the per-query counts say the same thing:
+
+| comparison | wins | losses | ties |
+|---|---:|---:|---:|
+| agent/hybrid > hybrid | 3 | **6** | **31** |
+| agent/hybrid > bm25 | 8 | **11** | 21 |
+
+**On 31 of 40 queries the agent returns a top-5 that scores identically to plain hybrid.** It
+routes 17 of 40 to the direct path, where it *is* plain hybrid by construction; all 9 queries
+whose score moves are on the decompose path, so of the 23 it actually decomposes it wins 3,
+loses 6 and ties 14. The decomposition changes the answer on 9 queries and improves it on 3.
+
+**`multi_hop` is where decomposition has a mechanism, and it is where the agent does worst:**
+
+| category | agent/hybrid − hybrid (raw) | − hybrid (of ceiling) | − bm25 (raw) | − bm25 (of ceiling) |
 |---|---|---|---|---|
-| bm25 | 400 | 0 | 0.0% | 0 |
-| dense | 400 | 0 | 0.0% | 0 |
-| hybrid | 400 | 42 | 10.5% | 40 |
-| agent/bm25 | 400 | 72 | 18.0% | 65 |
-| agent/dense | 400 | 76 | 19.0% | 72 |
-| agent/hybrid | 400 | 80 | 20.0% | 75 |
+| **multi_hop** | **−0.014 [−0.104, +0.072]** | **−0.025 [−0.176, +0.125]** | **−0.018 [−0.125, +0.081]** | **−0.050 [−0.225, +0.125]** |
+| api_lookup | −0.010 [−0.077, +0.054] | −0.017 [−0.133, +0.067] | +0.001 [−0.129, +0.126] | −0.008 [−0.171, +0.150] |
+| conceptual | +0.000 [−0.063, +0.056] | +0.000 [−0.120, +0.120] | −0.001 [−0.097, +0.095] | +0.000 [−0.140, +0.140] |
+| tutorial | −0.009 [−0.063, +0.031] | −0.020 [−0.120, +0.060] | +0.030 [−0.061, +0.133] | +0.040 [−0.140, +0.200] |
 
-BM25 and dense score 0% **by construction** — the pool *is* their top-10s, so they cannot
-surface anything unjudged. This is the pooling bias made visible: the two retrievers that
-built the pool are the only two it fully covers. Note the corollary, which is not about the
-agent at all: **the hybrid's published numbers already run through a 10.5% unjudged hole**,
-and it was scored anyway. The agent adds 9.5pp on top of that, not the full 20.
+Every category is negative or flat against hybrid, and `multi_hop` is the most negative of the
+four on both forms of recall@5 — the one category where splitting a query into sub-queries was
+supposed to pay. In the raw table it is the only category where the agent falls clearly below
+its base (R@5 0.312 vs 0.337, of-ceiling 0.83 vs 0.90). The predicted mechanism does not
+appear in the place it was predicted.
 
-Sizing the re-pool:
+This is the sharpest comparison in this README: `agent/hybrid − hybrid` is the narrowest
+paired interval of any pair (0.065 wide, **5.3×** tighter than naively summing the marginals),
+because the two systems share a base and cancel almost everything. It is not underpowered.
 
-- **80 (query, page) pairs** to grade for `agent/hybrid` alone — the number of decisions.
-- **75 distinct pages** to read — one page unjudged for three queries is three decisions but
-  one read.
-- **203 pairs / 172 distinct pages** to cover all four systems at once, which is the cheaper
-  order if the ablation is going to compare them.
+**So: the agent layer costs 0.77 s of model time per query — 93% of its end-to-end latency,
+against 0.06 s of retrieval — and returns no measurable retrieval gain over the hybrid it
+wraps, and none over BM25.** Nothing was tuned in response — the
+prompts are the frozen first draft, the routing threshold was never searched, and the fusion
+is the same untuned RRF. What this measures is the agent as built, not the best agent
+obtainable; a negative result on one 40-query set with κ = 0.09 judgments does not establish
+that decomposition cannot help. It does establish that this one does not, here.
 
-For scale, the existing 611 judgments took two rounds of grading. Adding 80 is roughly a 13%
-increase; 203 is roughly 33%.
+The one thing the agent does not lose on is recall@10 relative to the rerankers (0.634 vs
+0.562/0.558) — it is the only system besides BM25 and hybrid that keeps most of its top-10
+recall, because fusing sub-query lists adds pages rather than reordering a fixed set.
 
 ### The re-pool file
 
-`eval/pool_agent.yaml` is that pool, emitted in the same format `eval/pool.py` writes and
-reads — **203 candidates over 40 queries, 172 distinct pages**, every `grade:` blank:
+`eval/pool_agent.yaml` is that pool, in the same format `eval/pool.py` writes and reads —
+**203 candidates over 40 queries, 172 distinct pages**, now fully graded:
 
 ```bash
 python -m agent.coverage --offline \
@@ -653,7 +767,7 @@ python -m agent.coverage --offline \
 `--system` is repeatable, and the systems are pooled in **one** `build_pool` call rather than
 merged afterwards, so a page four systems returned is one candidate carrying four `found_by`
 entries, not four rows. The overlap is large: 270 unjudged pairs summed over the four systems
-collapse to 203 once pooled.
+collapsed to 203 once pooled.
 
 | system | retrieved | unjudged | rate | distinct pages |
 |---|---|---|---|---|
@@ -663,44 +777,39 @@ collapse to 203 once pooled.
 | hybrid | 400 | 42 | 10.5% | 40 |
 | **union** | 743 | **203** | 27.3% | **172** |
 
-Per category, the union's unjudged rate is 21.3% `api_lookup`, 31.8% `conceptual`, 37.0%
-`multi_hop`, 21.2% `tutorial`. 8 of 40 queries are already fully covered; the worst are q14
-(60.0%), q24 (58.3%) and q10 (55.6%).
-
-Grade it, then **append** — `merge` replaces a query's whole `judgments` block and would
-destroy the existing 611:
-
-```bash
-python -m eval.pool append --pool eval/pool_agent.yaml
-```
+8 of 40 queries were already fully covered, so the 203 candidates fall across the other 32;
+the worst were q14 (60.0%), q24 (58.3%) and q10 (55.6%). Grading came back 130 × 0, 66 × 1
+and 7 × 2 — **64% of the pages the pool was missing turned out to be irrelevant anyway**,
+which is why closing a 20% hole moved the agent's recall so little. The 73 relevant additions
+raised the mean relevant pages per query from 9.8 to 11.6 and pushed every system's raw
+recall@5 down.
 
 `--out` refuses to overwrite an existing file (`--force` overrides). A graded pool is not
-recoverable, and every other `eval/*.yaml` is one.
-
-Until those are graded, an agent-vs-hybrid comparison on this judgment set is measuring pool
-coverage as much as retrieval quality, and the direction of the bias is known: it penalises
-the agent, because the agent is the system returning pages the pool never saw.
-`python -m agent.coverage --out <file>` writes the unjudged candidates as a gradeable delta
-pool in the same format `eval/pool.py` uses. Nothing is written by default, and nothing in
-`agent/` modifies a judgment file.
+recoverable, and every other `eval/*.yaml` is one. Nothing in `agent/` modifies a judgment
+file.
 
 ## Next
 
 1. ~~Grade `eval/pool.yaml` and merge it.~~ Done 2026-09-08.
 2. ~~Add a semantic retriever, re-pool, grade the new candidates.~~ Done: 611 judgments, and
-   BM25's tautological R@10 of 1.000 is now 0.772.
-3. **Re-grade the 159 pre-rubric grade-1 judgments** (`eval/regrade_ones.yaml`, built and
+   BM25's tautological R@10 of 1.000 is now 0.675.
+3. ~~Grade `eval/pool_agent.yaml`, then run the ablation.~~ Done 2026-09-09: 814 judgments,
+   hybrid's and agent/hybrid's unjudged rates both closed to 0.0%, and the ablation says the
+   agent does not beat plain retrieval.
+4. **Re-grade the 303 pre-rubric grade-1 judgments** (`eval/regrade_ones.yaml`, built and
    unfilled). Grade 1 is the largest category and the least reproducible; until it is redone
    against `eval/GRADING.md`, limitation 3 stands and the metrics stay optimistically biased.
-4. Re-run the blind probe after that re-grade, holding the contrast fixed this time, so the
-   rubric's effect can be separated from the contrast effect.
-5. Decide what alias pages should ultimately be: collapsed as they are now, merged into one
+   Note the file was built against the 611-judgment set and does not cover the 66 grade-1
+   judgments the agent round added.
+5. **Pool the rerankers.** They are now the only systems with an open unjudged hole (23.8%
+   and 22.8%), because they promote out of a top-100 nothing has graded. Until that round is
+   run, the reranking result is biased against them by an unknown amount and is the weakest
+   claim in this README.
+6. Re-run the blind probe after the grade-1 re-grade, holding the contrast fixed this time, so
+   the rubric's effect can be separated from the contrast effect. A probe that also samples
+   the agent-round judgments would measure the cross-sitting drift in limitation 5, which
+   nothing currently does.
+7. Decide what alias pages should ultimately be: collapsed as they are now, merged into one
    page at chunk time, or dropped. The data to decide is in `pages.canonical_url`, and the
    measured cost of not collapsing them is a drop in R@10 from 1.000 to 0.652 on the
    400-judgment set.
-6. **Grade `eval/pool_agent.yaml`, then run the ablation.** Built and unfilled: 203
-   candidates over 40 queries, 172 distinct pages, covering `agent/bm25`, `agent/dense`,
-   `agent/hybrid` and plain `hybrid` in one round. Grade it, then `python -m eval.pool append
-   --pool eval/pool_agent.yaml`. Running the ablation before this measures pool coverage, and
-   the bias runs against the agent. The same round closes the hybrid's own 10.5% hole, which
-   is already open in the published numbers.

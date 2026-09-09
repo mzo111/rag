@@ -92,6 +92,9 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.searchsorted.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.cummax.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.rot90.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.sort.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.argmin.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.argsort.html, grade: 1}
 
   - id: q04
     category: api_lookup
@@ -112,6 +115,8 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.scatter_reduce_.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.scatter_add.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.diagonal_scatter.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/distributed.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/torch.html, grade: 0}
 
   - id: q05
     category: api_lookup
@@ -133,6 +138,15 @@ queries:
       - {url: https://docs.pytorch.org/tutorials/intermediate/FSDP_tutorial.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/fsdp.html, grade: 0}
       - {url: https://docs.pytorch.org/tutorials/intermediate/pipelining_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/introyt1_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/tensorboard_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/elastic/run.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/windows.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/FSDP_advanced_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/blitz/data_parallel_tutorial.html, grade: 0}
 
   - id: q06
     category: api_lookup
@@ -151,6 +165,9 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.cuda.seed_all.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.xpu.seed_all.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/notes/randomness.html, grade: 2}
+      - {url: https://docs.pytorch.org/docs/2.14/torch.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/random.html, grade: 2}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.mps.seed.html, grade: 0}
 
   - id: q07
     category: api_lookup
@@ -171,6 +188,9 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_nn_module.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.modules.module.register_module_full_backward_hook.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/notes/autograd.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.modules.module.register_module_parameter_registration_hook.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/recipes/recipes/swap_tensors.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/rpc.html, grade: 0}
 
   - id: q08
     category: api_lookup
@@ -217,6 +237,8 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.erf.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.func.hessian.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.igammac_.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/torch.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/complex_numbers.html, grade: 0}
 
   - id: q10
     category: api_lookup
@@ -239,6 +261,21 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.Conv1d.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/intermediate/custom_function_conv_bn_tutorial.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.ao.nn.quantized.functional.conv2d.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/export/draft_export.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.functional.triplet_margin_loss.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/special.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.greater.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.greater.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.sym_constrain_range_for_size.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.gcd.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.hardshrink.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.ConstantPad2d.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.log1p.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.ReplicationPad2d.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.ndim.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.greater_.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/export.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.LazyConv2d.html, grade: 1}
 
   - id: q11
     category: api_lookup
@@ -281,6 +318,16 @@ queries:
       - {url: https://docs.pytorch.org/tutorials/recipes/recipes/swap_tensors.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/accelerator/autoload.html, grade: 0}
       - {url: https://docs.pytorch.org/tutorials/intermediate/torch_export_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/accelerator/ci.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/extending.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/advanced/custom_classes.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/advanced/custom_class_pt2.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.ao.quantization.utils.get_swapped_custom_module_class.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.ao.quantization.observer.default_weight_observer.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/package.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.ao.quantization.qconfig.float_qparams_weight_only_qconfig.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/export/programming_model.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/recipes/recipes/warmstarting_model_using_parameters_from_a_different_model.html, grade: 0}
 
   # ---- conceptual ----------------------------------------------------------
   - id: q13
@@ -327,6 +374,21 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.NAdam.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.LBFGS.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.ASGD.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.autograd.graph.increment_version.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/advanced/semi_structured_sparse.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.enable_grad.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.is_inference_mode_enabled.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.is_inference.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.is_neg.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.mode.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.autograd.gradcheck.GradcheckError.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.mode.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/backends.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.embedding.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.is_anomaly_enabled.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/nlp/pytorch_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/autogradyt_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.Adagrad.html, grade: 0}
 
   - id: q15
     category: conceptual
@@ -348,6 +410,15 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/ddp_comm_hooks.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.parameter.UninitializedBuffer.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/nn.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_transformations.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.fuse_linear_bn_weights.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.parameter.Parameter.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.RNNBase.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.InstanceNorm1d.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/rpc_param_server_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/modelsyt_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/examples_nn/polynomial_module.html, grade: 1}
 
   - id: q16
     category: conceptual
@@ -367,6 +438,16 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.backward.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.requires_grad.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.autograd.grad.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/index.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/fx.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.ao.quantization.add_quant_dequant.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/nlp/pytorch_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/tensors_deeper_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.LBFGS.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/examples_tensor/polynomial_tensor.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.ASGD.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/tensors.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.autograd.backward.html, grade: 1}
 
   - id: q17
     category: conceptual
@@ -387,6 +468,18 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.ao.quantization.qconfig.float16_dynamic_qconfig.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.set_autocast_dtype.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/fsdp.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/ddp_comm_hooks.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/torch_export_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.cuda.StreamContext.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.set_autocast_enabled.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.set_float32_matmul_precision.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.xpu.is_bf16_supported.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/mkldnn.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.cuda.is_bf16_supported.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.is_autocast_enabled.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.set_autocast_cpu_enabled.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.is_floating_point.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/accelerator/operators.html, grade: 0}
 
   - id: q18
     category: conceptual
@@ -407,6 +500,7 @@ queries:
       - {url: https://docs.pytorch.org/tutorials/intermediate/compiled_autograd_tutorial.html, grade: 0}
       - {url: https://docs.pytorch.org/tutorials/intermediate/custom_function_double_backward_tutorial.html, grade: 0}
       - {url: https://docs.pytorch.org/tutorials/advanced/python_custom_ops_registrations.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/extending.func.html, grade: 1}
 
   - id: q19
     category: conceptual
@@ -425,6 +519,7 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/torch.compiler_troubleshooting_old.html, grade: 2}
       - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/compile/programming_model.nested_graph_breaks.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_faq.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_dynamo_deepdive.html, grade: 2}
 
   - id: q20
     category: conceptual
@@ -445,6 +540,8 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.conj.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.diagflat.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/notes/tensor_iterator.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/autograd.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.dim_order.html, grade: 1}
 
   - id: q21
     category: conceptual
@@ -468,6 +565,15 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.sparse.semi_structured.SparseSemiStructuredTensorCUSPARSELT.html, grade: 0}
       - {url: https://docs.pytorch.org/tutorials/beginner/basics/tensorqs_tutorial.html, grade: 0}
       - {url: https://docs.pytorch.org/tutorials/beginner/introyt/autogradyt_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_complex_number_support.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/gradcheck.html, grade: 2}
+      - {url: https://docs.pytorch.org/docs/2.14/tensor_attributes.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.norm.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.autograd.grad.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.complex.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.LBFGS.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/nlp/deep_learning_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/extending.html, grade: 1}
 
   - id: q22
     category: conceptual
@@ -487,6 +593,10 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.reshape_as.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.view_copy.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.view_as.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/nlp/sequence_models_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/storage.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/intermediate_data_loading_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.share_memory_.html, grade: 0}
 
   # ---- multi_hop -----------------------------------------------------------
   - id: q23
@@ -509,6 +619,10 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.get_autocast_cpu_dtype.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.set_autocast_gpu_dtype.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.get_autocast_gpu_dtype.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_backward.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.get_autocast_dtype.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.set_autocast_dtype.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.sparse.semi_structured.SparseSemiStructuredTensorCUSPARSELT.html, grade: 0}
 
   - id: q24
     category: multi_hop
@@ -529,6 +643,20 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/notes/ddp.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/intermediate/ddp_series_minGPT.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/beginner/basics/saveloadrun_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/nn.aliases.html, grade: 2}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/local_tensor_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/advanced/generic_join.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.Module.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.fx.experimental.unify_refinements.infer_symbolic_types_single_pass.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/get_start_xpu.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/recipes/foreach_map.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/autograd.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_custom_backends.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/FSDP_advanced_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/elastic/run.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.swa_utils.AveragedModel.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.load.html, grade: 0}
 
   - id: q25
     category: multi_hop
@@ -547,6 +675,15 @@ queries:
       - {url: https://docs.pytorch.org/tutorials/intermediate/torchrec_intro_tutorial.html, grade: 0}
       - {url: https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/distributed.optim.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/autogradyt_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/tensors_deeper_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/numerical_accuracy.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/cuda.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.mps.profiler.stop.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.fx.experimental.unification.multipledispatch.dispatcher.halt_ordering.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/torch.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/custom_function_conv_bn_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.optim.Rprop.html, grade: 1}
 
   - id: q26
     category: multi_hop
@@ -566,6 +703,13 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/func.migrating.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/notes/extending.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_aot_compile.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/torch_compile_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/compile/programming_model.nested_graph_breaks.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/compile/programming_model.fullgraph_true.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.compiler.compile.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.compile.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/recipes/torch_compile_torch_function_modes.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/recipes/torch_compile_caching_tutorial.html, grade: 0}
 
   - id: q27
     category: multi_hop
@@ -586,6 +730,11 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.index_reduce.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.index_reduce.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.scatter_add.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.TripletMarginWithDistanceLoss.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.functional.cross_entropy.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/masked.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/symmetric_memory.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.index_add.html, grade: 1}
 
   - id: q28
     category: multi_hop
@@ -608,6 +757,9 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.cudnn_convolution.html, grade: 0}
       - {url: https://docs.pytorch.org/tutorials/intermediate/custom_function_conv_bn_tutorial.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.cudnn_convolution_add_relu.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/numerical_accuracy.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/cuda.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.Conv3d.html, grade: 0}
 
   - id: q29
     category: multi_hop
@@ -627,6 +779,16 @@ queries:
       - {url: https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/beginner/blitz/data_parallel_tutorial.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/notes/windows.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/rpc.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/rpc_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/elastic/numa.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/tensors_deeper_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.amin.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.Tensor.nonzero_static.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.xpu.seed.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.cuda.seed.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/introyt1_tutorial.html, grade: 1}
 
   - id: q30
     category: multi_hop
@@ -643,6 +805,11 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_faq.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/notes/ddp.html, grade: 2}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.parallel.DistributedDataParallel.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/TP_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/dist_overview.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/advanced/sharding.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/distributed.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/ddp_comm_hooks.html, grade: 1}
 
   # ---- tutorial ------------------------------------------------------------
   - id: q31
@@ -663,6 +830,12 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/notes/randomness.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html, grade: 2}
       - {url: https://docs.pytorch.org/tutorials/intermediate/intermediate_data_loading_tutorial.html, grade: 2}
+      - {url: https://docs.pytorch.org/docs/2.14/elastic/timer.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/advanced/pendulum.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/export/programming_model.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/cuda.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/nn_tutorial.html, grade: 2}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html, grade: 1}
 
   - id: q32
     category: tutorial
@@ -681,6 +854,7 @@ queries:
       - {url: https://docs.pytorch.org/tutorials/intermediate/FSDP_advanced_tutorial.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/beginner/basics/saveloadrun_tutorial.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/advanced/cpp_frontend.html, grade: 2}
 
   - id: q33
     category: tutorial
@@ -720,6 +894,15 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/torch.compiler_get_started.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/intermediate/pruning_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/intermediate_data_loading_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/data_loading_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/FSDP1_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/blitz/data_parallel_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/dist_tuto.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/knowledge_distillation_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/blitz/autograd_tutorial.html, grade: 1}
 
   - id: q35
     category: tutorial
@@ -743,6 +926,16 @@ queries:
       - {url: https://docs.pytorch.org/tutorials/intermediate/fx_profiling_tutorial.html, grade: 2}
       - {url: https://docs.pytorch.org/tutorials/intermediate/torch_compile_full_example.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/advanced/cpp_frontend.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/index.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/compile/programming_model.common_graph_breaks.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/advanced/coding_ddpg.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/recipes/recipes/benchmark.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/introyt/introyt1_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/user_guide/torch_compiler/compile/programming_model.reducing_compile_time.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/torchrec_intro_tutorial.html, grade: 0}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/dqn_with_rnn_tutorial.html, grade: 1}
 
   - id: q36
     category: tutorial
@@ -762,6 +955,8 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.Threshold.html, grade: 0}
       - {url: https://docs.pytorch.org/docs/2.14/nn.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.Upsample.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.SELU.html, grade: 0}
+      - {url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.SiLU.html, grade: 0}
 
   - id: q37
     category: tutorial
@@ -782,6 +977,13 @@ queries:
       - {url: https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html, grade: 1}
       - {url: https://docs.pytorch.org/tutorials/beginner/ddp_series_intro.html, grade: 2}
       - {url: https://docs.pytorch.org/tutorials/intermediate/ddp_series_minGPT.html, grade: 2}
+      - {url: https://docs.pytorch.org/docs/2.14/cuda.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/hyperparameter_tuning_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/intermediate/dist_tuto.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/advanced/generic_join.html, grade: 1}
+      - {url: https://docs.pytorch.org/tutorials/beginner/blitz/data_parallel_tutorial.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/ddp.html, grade: 2}
+      - {url: https://docs.pytorch.org/tutorials/beginner/former_torchies/parallelism_tutorial.html, grade: 1}
 
   - id: q38
     category: tutorial
@@ -841,3 +1043,4 @@ queries:
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.ao.quantization.quantize_fx.prepare_fx.html, grade: 2}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.ao.quantization.fake_quantize.default_fused_act_fake_quant.html, grade: 1}
       - {url: https://docs.pytorch.org/docs/2.14/generated/torch.ao.quantization.fake_quantize.FakeQuantize.html, grade: 1}
+      - {url: https://docs.pytorch.org/docs/2.14/notes/modules.html, grade: 0}

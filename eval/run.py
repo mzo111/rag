@@ -11,7 +11,10 @@ sides, so a judgment written against ``torch.optim.Adam`` still matches a retrie
 returns ``torch.optim.adam.Adam_class``, and the same content cannot be counted twice.
 
 Usage:
-    python -m eval.run --retriever bm25|dense|hybrid|rerank|random [--k 10]
+    python -m eval.run --retriever bm25|dense|hybrid|rerank|agent|random [--k 10]
+
+The agent needs its extra dependencies (``requirements-agent.txt``); ``--offline`` replays
+the committed response cache instead of calling Ollama.
 """
 
 from __future__ import annotations
@@ -215,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(
         "--retriever",
-        choices=["bm25", "dense", "hybrid", "rerank", "random"],
+        choices=["bm25", "dense", "hybrid", "rerank", "agent", "random"],
         default="bm25",
     )
     ap.add_argument("--db", type=Path, default=Path("data/corpus.db"))
@@ -231,6 +234,17 @@ def main(argv: list[str] | None = None) -> int:
         choices=["bm25", "dense", "hybrid"],
         default="hybrid",
         help="rerank: first-stage retriever whose top N is reordered",
+    )
+    ap.add_argument(
+        "--agent-base",
+        choices=["bm25", "dense", "hybrid"],
+        default="hybrid",
+        help="agent: base retriever the agent runs its sub-queries through",
+    )
+    ap.add_argument(
+        "--offline",
+        action="store_true",
+        help="agent: replay the committed response cache instead of calling Ollama",
     )
     ap.add_argument("--include-unjudged", action="store_true")
     ap.add_argument(
@@ -269,6 +283,12 @@ def main(argv: list[str] | None = None) -> int:
             from retrieval.rerank import RerankRetriever, _make_base
 
             retriever = RerankRetriever(store, _make_base(args.rerank_base, store))
+        elif args.retriever == "agent":
+            from agent.run import make_agent
+
+            retriever = make_agent(
+                store, args.agent_base, offline=args.offline, check=not args.offline
+            )
         else:
             retriever = RandomBaseline(store.chunk_ids(), seed=args.seed)
         canonical = None if args.no_canonical else store.canonical_map()
@@ -288,7 +308,8 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
     else:
-        print(f"retriever: {args.retriever}   corpus: {args.db}   k={args.k}\n")
+        label = f"agent/{args.agent_base}" if args.retriever == "agent" else args.retriever
+        print(f"retriever: {label}   corpus: {args.db}   k={args.k}\n")
         print(format_table(results, len(queries), n_skipped, verbose=args.verbose))
     return 0
 

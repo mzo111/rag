@@ -21,12 +21,17 @@ Scoring reuses the frozen harness - :mod:`eval.metrics` and :func:`eval.run.to_u
 than reimplementing any metric. Retrieval does not depend on the grades and no judgment carries
 an anchor, so each system is run once and only the scoring is repeated.
 
-recall@5 is the primary metric, raw and as a fraction of its achievable ceiling (with ~9.8
+recall@5 is the primary metric, raw and as a fraction of its achievable ceiling (with ~10.4
 relevant pages per query, five slots cannot hold them all). MRR is reported as a secondary line
-only: at this judgment density it is saturated and is not expected to discriminate.
+only: at this judgment density it is saturated and is not expected to discriminate. nDCG@10 is
+bootstrapped too, but only so it can be quoted with an interval - it is not used to rank.
 
 Usage:
     python -m eval.paired [--draws 4000] [--k 10] [--json out.json]
+                          [--no-rerank] [--no-agent] [--offline]
+
+The agent system needs ``requirements-agent.txt``; ``--offline`` replays the committed
+response cache instead of calling Ollama.
 """
 
 from __future__ import annotations
@@ -41,7 +46,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from eval.metrics import mrr, recall_at_k
+from eval.metrics import mrr, ndcg_at_k, recall_at_k
 from eval.run import CATEGORIES, RandomBaseline, canonical_key, load_queries, to_units
 
 EVAL_DIR = Path(__file__).parent
@@ -50,7 +55,16 @@ PROBE_2 = (EVAL_DIR / "recheck_2v1.yaml", EVAL_DIR / "recheck_2v1_key.yaml")
 DEFAULT_DRAWS = 4000
 SEED = 20260908
 RECALL_K = 5
-SYSTEMS = ("random", "bm25", "dense", "hybrid", "rerank_bm25", "rerank_hybrid")
+NDCG_K = 10
+SYSTEMS = (
+    "random",
+    "bm25",
+    "dense",
+    "hybrid",
+    "rerank_bm25",
+    "rerank_hybrid",
+    "agent_hybrid",
+)
 # Fusion comparisons, then the two reranking comparisons: a reranker is measured against the
 # exact base whose candidates it reorders, which is the only comparison it is entitled to.
 PAIRS = (
@@ -59,6 +73,10 @@ PAIRS = (
     ("bm25", "dense"),
     ("rerank_hybrid", "hybrid"),
     ("rerank_bm25", "bm25"),
+    # The agent against the base it decomposes over, and against the strongest single
+    # retriever. Both are comparisons the agent has to win to justify its cost.
+    ("agent_hybrid", "hybrid"),
+    ("agent_hybrid", "bm25"),
 )
 
 
@@ -127,7 +145,7 @@ def build_cache(store, queries, systems, k: int) -> dict[str, list[QueryRun]]:
 def per_query_scores(
     runs: Sequence[QueryRun], drawn: Sequence[np.ndarray]
 ) -> dict[str, np.ndarray]:
-    """recall@5 raw, recall@5 as a fraction of its ceiling, and MRR, per query.
+    """recall@5 raw, recall@5 as a fraction of its ceiling, MRR and nDCG@10, per query.
 
     The ceiling is min(k, R)/R for R relevant pages in this draw: with more than k relevant
     pages, recall@k cannot reach 1 however good the ranking is. Queries with no relevant page
@@ -138,13 +156,15 @@ def per_query_scores(
     raw = np.empty(n)
     ceil = np.empty(n)
     rr = np.empty(n)
+    nd = np.empty(n)
     for i, (run, g) in enumerate(zip(runs, drawn, strict=True)):
         gd = dict(zip(run.keys, g.tolist(), strict=True))
         rel = int((g > 0).sum())
         raw[i] = recall_at_k(run.ranked, gd, RECALL_K)
         rr[i] = mrr(run.ranked, gd)
+        nd[i] = ndcg_at_k(run.ranked, gd, NDCG_K)
         ceil[i] = raw[i] / (min(RECALL_K, rel) / rel) if rel else np.nan
-    return {"recall5": raw, "recall5_ceil": ceil, "mrr": rr}
+    return {"recall5": raw, "recall5_ceil": ceil, "mrr": rr, "ndcg10": nd}
 
 
 def _nanmean(v: np.ndarray) -> float:
@@ -169,7 +189,7 @@ def bootstrap(
         if len(idx):
             groups[cat] = idx
 
-    metrics = ("recall5", "recall5_ceil", "mrr")
+    metrics = ("recall5", "recall5_ceil", "mrr", "ndcg10")
     pairs = [(a, b) for a, b in PAIRS if a in cache and b in cache]
     marg = {(s, g, m): np.empty(draws) for s in names for g in groups for m in metrics}
     diff = {(a, b, g, m): np.empty(draws) for a, b in pairs for g in groups for m in metrics}
@@ -293,6 +313,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--no-rerank", action="store_true", help="skip the cross-encoder systems (much faster)"
     )
+    ap.add_argument("--no-agent", action="store_true", help="skip the agent system")
+    ap.add_argument(
+        "--offline",
+        action="store_true",
+        help="agent: replay the committed response cache instead of calling Ollama",
+    )
     args = ap.parse_args(argv)
 
     from corpus.store import Store
@@ -326,6 +352,12 @@ def main(argv: list[str] | None = None) -> int:
             systems["rerank_bm25"] = RerankRetriever(store, bm25, scorer)
             systems["rerank_hybrid"] = RerankRetriever(store, hybrid, scorer)
             print(f"reranker: {scorer.name} on {scorer.device}\n")
+        if not args.no_agent:
+            from agent.graph import AgentRetriever
+            from agent.run import make_client
+
+            client = make_client(offline=args.offline, check=not args.offline)
+            systems["agent_hybrid"] = AgentRetriever(store, hybrid, client)
         cache = build_cache(store, queries, systems, args.k)
 
     res = bootstrap(cache, counts, draws=args.draws, seed=args.seed)
