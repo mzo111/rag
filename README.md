@@ -170,7 +170,11 @@ them with `OR`, letting BM25 do the ranking. Dotted names are also split, so a q
 `torch.nn.functional.cross_entropy` still matches pages that only say `cross_entropy`.
 
 Alias collapsing and stub exclusion are on by default and can be switched off with
-`--keep-aliases` / `--keep-stubs` to measure what they are worth.
+`--keep-aliases` / `--keep-stubs` to measure what they are worth. `eval.run` takes the same
+two flags, so the ablation runs over the whole query set rather than one query: there they
+switch off the behaviour *in the retriever*, which is the measurement, and are distinct from
+`--no-canonical`, which switches off canonicalization in *scoring* so a judgment stops
+matching an alias of the page it was written against. Only `bm25` and `dense` accept them.
 
 ### Dense retrieval
 
@@ -810,6 +814,30 @@ file.
    the agent-round judgments would measure the cross-sitting drift in limitation 5, which
    nothing currently does.
 7. Decide what alias pages should ultimately be: collapsed as they are now, merged into one
-   page at chunk time, or dropped. The data to decide is in `pages.canonical_url`, and the
-   measured cost of not collapsing them is a drop in R@10 from 1.000 to 0.652 on the
-   400-judgment set.
+   page at chunk time, or dropped. The data to decide is in `pages.canonical_url`.
+   Re-measured on the current 814 judgments, the cost of not collapsing is a drop in R@10
+   from **0.675 to 0.443** for BM25 (R@5 0.392 -> 0.343, nDCG@10 0.802 -> 0.659) and from
+   **0.588 to 0.381** for dense (R@5 0.371 -> 0.318, nDCG@10 0.761 -> 0.621). With aliases
+   kept, 162 of BM25's 400 top-10 slots are a page it had already returned, which is where
+   the recall goes. Both arms reproduce from the committed CLI:
+
+   ```
+   # R@10 over all 40 queries, 814 judgments
+   python -m eval.run --retriever bm25                   # 0.675  aliases collapsed
+   python -m eval.run --retriever bm25  --keep-aliases   # 0.443  aliases kept
+   python -m eval.run --retriever dense                  # 0.588  aliases collapsed
+   python -m eval.run --retriever dense --keep-aliases   # 0.381  aliases kept
+   ```
+
+   The earlier figure for this ablation, 1.000 -> 0.652, was measured on the retired
+   400-judgment pool that BM25 had built by itself: its 1.000 was pool-induced, not a
+   retrieval result, so the drop it quoted was against a ceiling that never existed.
+
+   **Hybrid is absent because it cannot be ablated this way.** `HybridRetriever._pages`
+   resolves every candidate through `pages.canonical_url` before fusion, unconditionally, so
+   RRF already scores one entry per canonical page and there is no switch to turn off.
+   Collapsing is structural in the hybrid, not a policy it applies. `rerank` and `agent` are
+   absent for a weaker reason: both read a base retriever that `eval.run` builds with the
+   default policy, so the flags would not reach the stage being measured. Passing
+   `--keep-aliases` to any of the four is an error rather than a silent no-op, since a
+   silently ignored flag reads as an ablation that measured nothing.

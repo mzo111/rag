@@ -10,8 +10,17 @@ Alias pages (see :mod:`corpus.quality`) are collapsed to their canonical URL on 
 sides, so a judgment written against ``torch.optim.Adam`` still matches a retriever that
 returns ``torch.optim.adam.Adam_class``, and the same content cannot be counted twice.
 
+The two sides are separate flags. ``--keep-aliases`` / ``--keep-stubs`` mirror the retriever
+CLIs and switch off a corpus-quality behaviour *in the retriever*, which is the ablation:
+the retriever then spends several of its top-k slots on the same content. ``--no-canonical``
+switches off canonicalization *in scoring*, so a judgment no longer matches an alias of the
+page it was written against. They answer different questions; the ablation wants the first.
+Only bm25 and dense accept a policy, and the other retrievers reject the flags rather than
+ignore them.
+
 Usage:
     python -m eval.run --retriever bm25|dense|hybrid|rerank|agent|random [--k 10]
+    python -m eval.run --retriever bm25 --keep-aliases   # corpus-quality ablation
 
 The agent needs its extra dependencies (``requirements-agent.txt``); ``--offline`` replays
 the committed response cache instead of calling Ollama.
@@ -36,6 +45,24 @@ from eval.metrics import mrr, ndcg_at_k, recall_at_k
 QUERIES_PATH = Path(__file__).with_name("queries.yaml")
 CATEGORIES = ("api_lookup", "conceptual", "multi_hop", "tutorial")
 Locator = Callable[[Iterable[str]], dict[str, tuple[str, str]]]
+# Retrievers that take a corpus-quality policy. hybrid fuses on canonical_url
+# unconditionally, and rerank and the agent read a base this CLI builds with the defaults.
+QUALITY_RETRIEVERS = ("bm25", "dense")
+
+
+def quality_kwargs(keep_aliases: bool = False, keep_stubs: bool = False) -> dict[str, bool]:
+    """Retriever kwargs for the two corpus-quality behaviours, empty when both stay on.
+
+    Both are on by default (see :mod:`corpus.quality`); turning one off is the ablation that
+    measures what it is worth. This is the *retrieval* side and is independent of
+    ``--no-canonical``, which changes how judgments are matched during scoring.
+    """
+    kwargs: dict[str, bool] = {}
+    if keep_aliases:
+        kwargs["collapse_aliases"] = False
+    if keep_stubs:
+        kwargs["exclude_stubs"] = False
+    return kwargs
 
 
 @runtime_checkable
@@ -250,11 +277,30 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--no-canonical",
         action="store_true",
-        help="do not collapse alias pages to their canonical URL",
+        help="scoring: do not collapse alias pages to their canonical URL",
+    )
+    ap.add_argument(
+        "--keep-aliases",
+        action="store_true",
+        help="bm25/dense: do not collapse alias pages in the retriever (corpus-quality ablation)",
+    )
+    ap.add_argument(
+        "--keep-stubs",
+        action="store_true",
+        help="bm25/dense: do not exclude deprecated stub pages (corpus-quality ablation)",
     )
     ap.add_argument("--json", action="store_true", help="print per-query results as JSON")
     ap.add_argument("-v", "--verbose", action="store_true", help="per-query rows")
     args = ap.parse_args(argv)
+    quality = quality_kwargs(args.keep_aliases, args.keep_stubs)
+    if quality and args.retriever not in QUALITY_RETRIEVERS:
+        ap.error(
+            f"--keep-aliases/--keep-stubs cannot be honoured for {args.retriever!r}; "
+            f"they apply to {' and '.join(QUALITY_RETRIEVERS)} only. hybrid fuses on "
+            "canonical_url unconditionally (HybridRetriever._pages), so collapsing is "
+            "structural there rather than a switch, and rerank and the agent read a base "
+            "retriever this CLI builds with the default policy."
+        )
 
     from corpus.store import Store
 
@@ -266,7 +312,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.retriever == "bm25":
             from retrieval.bm25 import Bm25Retriever
 
-            retriever: Retriever = Bm25Retriever(store)
+            retriever: Retriever = Bm25Retriever(store, **quality)
         elif args.retriever == "dense":
             from retrieval.dense import DEFAULT_INDEX_DIR, DEFAULT_MODEL, DenseRetriever
 
@@ -274,6 +320,7 @@ def main(argv: list[str] | None = None) -> int:
                 store,
                 model=args.dense_model or DEFAULT_MODEL,
                 directory=args.dense_index or DEFAULT_INDEX_DIR,
+                **quality,
             )
         elif args.retriever == "hybrid":
             from retrieval.hybrid import HybridRetriever

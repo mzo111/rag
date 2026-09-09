@@ -3,6 +3,7 @@ import pytest
 from corpus.chunk import Chunk
 from corpus.store import Store
 from eval.run import (
+    QUALITY_RETRIEVERS,
     Judgment,
     Query,
     RandomBaseline,
@@ -11,6 +12,8 @@ from eval.run import (
     evaluate,
     format_table,
     load_queries,
+    main,
+    quality_kwargs,
     summarize,
     to_units,
 )
@@ -159,3 +162,32 @@ def test_evaluate_credits_a_retriever_that_returns_the_alias():
     assert no_map.ndcg_10 == 0.0  # alias looks like a different page
     (with_map,) = evaluate(r, queries, locate_with_alias, k=10, canonical=CANONICAL)
     assert (with_map.recall_5, with_map.mrr, with_map.ndcg_10) == (1.0, 1.0, 1.0)
+
+
+# --- corpus-quality flags -------------------------------------------------------
+
+
+def test_quality_kwargs_is_empty_when_both_behaviours_stay_on():
+    """No flags means no kwargs, so the retrievers keep their own defaults."""
+    assert quality_kwargs() == {}
+    assert quality_kwargs(False, False) == {}
+
+
+def test_quality_kwargs_turns_off_only_what_was_asked_for():
+    assert quality_kwargs(keep_aliases=True) == {"collapse_aliases": False}
+    assert quality_kwargs(keep_stubs=True) == {"exclude_stubs": False}
+    assert quality_kwargs(True, True) == {"collapse_aliases": False, "exclude_stubs": False}
+
+
+@pytest.mark.parametrize("retriever", ["hybrid", "rerank", "agent", "random"])
+@pytest.mark.parametrize("flag", ["--keep-aliases", "--keep-stubs"])
+def test_main_rejects_quality_flags_it_cannot_honour(retriever, flag, capsys):
+    """Silently ignoring these would read as an ablation that measured nothing."""
+    assert retriever not in QUALITY_RETRIEVERS
+    with pytest.raises(SystemExit) as exc:
+        main(["--retriever", retriever, flag])
+    assert exc.value.code == 2
+    err = capsys.readouterr().err
+    assert "cannot be honoured" in err and retriever in err
+    # the guard runs before the store is opened, so it never depends on a corpus
+    assert "canonical_url" in err
