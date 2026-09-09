@@ -11,3 +11,6 @@ data/*.jsonl
 data/dense/
 *:Zone.Identifier
 *.bak
+grading_preview.html
+make_grading_page.py
+grading.html
