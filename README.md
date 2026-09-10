@@ -40,18 +40,41 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requiremen
 .venv/bin/python -m corpus.chunk      # writes data/chunks.jsonl + data/stats.json, prints stats
 .venv/bin/python -m corpus.store      # loads into data/corpus.db + quality pass (safe to re-run)
 .venv/bin/python -m retrieval.bm25 "how do I write a custom Dataset"   # ad-hoc search
-.venv/bin/python -m eval.pool build   # -> eval/pool.yaml, the pages to grade by hand
-.venv/bin/python -m eval.pool merge   # folds your grades into eval/queries.yaml
 .venv/bin/python -m eval.run --retriever bm25 -v
 ```
 
-The agent layer is optional and installs separately, like the embedder:
+**The judgments are already in the repo.** `eval/queries.yaml` ships with all 814 of them, so
+nothing above regrades anything and `eval.run` scores against them immediately. Building a
+pool is only for extending the judgment set — see
+[Judging with a pool](#judging-with-a-pool).
+
+**Dense, hybrid and rerank need the embedder**, which installs separately because it pulls in
+torch:
+
+```bash
+.venv/bin/pip install -r requirements-embed.txt
+.venv/bin/python -m retrieval.dense build       # embeds 11,832 chunks -> data/dense/
+.venv/bin/python -m eval.run --retriever dense -v
+.venv/bin/python -m eval.run --retriever hybrid -v
+.venv/bin/python -m eval.run --retriever rerank -v    # cross-encoder, ~2.4 s retrieval per query
+```
+
+The agent layer is optional and installs separately too:
 
 ```bash
 .venv/bin/pip install -r requirements-agent.txt
-ollama serve && ollama pull qwen2.5:7b        # only needed for live calls
 .venv/bin/python -m agent.run --offline                    # replays the committed cache
 .venv/bin/python -m agent.coverage --offline --baseline    # unjudged-page audit
+```
+
+`--offline` needs nothing served. For live calls, Ollama must be running and the model
+pulled. `ollama serve` blocks in the foreground, so it is its own process — and on most
+installs a system service is already listening, in which case the first command exits
+immediately with "address already in use" and can be skipped:
+
+```bash
+ollama serve &                 # only if nothing is listening on :11434 already
+ollama pull qwen2.5:7b         # ~4.7 GB, once
 ```
 
 Generation shares those dependencies and that cache machinery; it needs no others:
@@ -293,6 +316,21 @@ that returns `torch.optim.adam.Adam_class`, and the same content cannot be count
 Queries without judgments are skipped and counted; `--include-unjudged` runs them anyway.
 
 ### Judging with a pool
+
+**None of this is needed to run the system.** `eval/queries.yaml` already contains all 814
+judgments, and every metric in this README is scored against them as committed. What follows
+is how they were produced, and what to do when a new retriever needs new pages graded:
+
+```bash
+.venv/bin/python -m eval.pool build   # -> eval/pool.yaml, the pages to grade by hand
+# fill in every `grade:`, then:
+.venv/bin/python -m eval.pool append --pool eval/pool.yaml   # folds them into queries.yaml
+```
+
+`append` adds to a query's judgments; `merge` replaces the whole list, which is why the agent
+round used `append`. They differ in how they refuse to clobber: `merge` overwrites only when
+given `--force`, while `append` has no such flag — it reports an already-judged page as a
+conflict and skips it, because a page cannot hold two grades.
 
 Grading 11,832 chunks by hand is not feasible; grading what retrievers actually return is.
 `eval/pool.py build` runs each retriever over every query, unions their top-k pages, and
