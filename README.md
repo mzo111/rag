@@ -155,9 +155,16 @@ publishes the same object at several URLs, e.g. `torch.optim.Adam` and
 `torch.optim.adam.Adam_class`. The text is identical apart from the dotted path in
 signatures. Detection needs all three of: identical text after collapsing dotted identifiers
 to their last segment; one URL's dotted path being a subsequence of the other's; and the same
-device namespace. The last two conditions are not optional. 18 groups have identical
-normalized text but document genuinely different APIs, `torch.cuda.current_device` versus
-`torch.xpu.current_device` among them, and text alone merges them wrongly.
+device namespace. The last two conditions are not optional: **20 groups have identical
+normalized text but document genuinely different APIs**, `torch.cuda.current_device` versus
+`torch.xpu.current_device` among them, and text alone merges them wrongly. That count, and
+the three above it, are printed by the quality pass:
+
+```
+python -m corpus.store
+# alias groups: 270 covering 540 pages (270 redundant); deprecated stubs: 36;
+# identical text but different APIs: 20 groups
+```
 
 **Deprecated stubs: 36 pages.** Redirect notices such as "This tutorial was deprecated" with
 no content. They match queries lexically and answer nothing. Detection requires a single

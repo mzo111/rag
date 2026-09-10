@@ -102,6 +102,34 @@ def canonical_of(group: Sequence[str]) -> str:
     return min(group, key=lambda u: (len(u), u))
 
 
+def count_text_only_collisions(pages: Mapping[str, Sequence[str]]) -> int:
+    """Signature buckets that the path and device checks split into more than one cluster.
+
+    These are the pages that would be merged by identical text alone and must not be:
+    `torch.cuda.current_device` against `torch.xpu.current_device`, `torch.Event` against
+    `torch.mtia.Event`. The count is the argument for conditions 2 and 3 not being optional,
+    so it is measured rather than asserted.
+    """
+    by_sig: dict[str, list[str]] = {}
+    for url, texts in pages.items():
+        by_sig.setdefault(page_signature(texts), []).append(url)
+    split = 0
+    for urls in by_sig.values():
+        if len(urls) < 2:
+            continue
+        clusters: list[list[str]] = []
+        for url in sorted(urls):
+            for cluster in clusters:
+                if all(alias_compatible(url, other) for other in cluster):
+                    cluster.append(url)
+                    break
+            else:
+                clusters.append([url])
+        if len(clusters) > 1:
+            split += 1
+    return split
+
+
 def find_alias_groups(pages: Mapping[str, Sequence[str]]) -> list[list[str]]:
     """Group URLs whose pages are aliases of one another. Singletons are omitted."""
     by_sig: dict[str, list[str]] = {}
@@ -138,6 +166,8 @@ class QualityReport:
     canonical: dict[str, str] = field(default_factory=dict)  # url -> canonical url
     alias_groups: list[list[str]] = field(default_factory=list)
     stubs: set[str] = field(default_factory=set)
+    # Buckets identical text alone would have merged wrongly; see count_text_only_collisions.
+    text_only_collisions: int = 0
 
     @property
     def n_alias_pages(self) -> int:
@@ -154,7 +184,8 @@ class QualityReport:
     def summary(self) -> str:
         return (
             f"alias groups: {len(self.alias_groups)} covering {self.n_alias_pages} pages "
-            f"({self.n_redundant} redundant); deprecated stubs: {len(self.stubs)}"
+            f"({self.n_redundant} redundant); deprecated stubs: {len(self.stubs)}; "
+            f"identical text but different APIs: {self.text_only_collisions} groups"
         )
 
 
@@ -170,4 +201,9 @@ def analyze(pages: Mapping[str, Sequence[str]], tokens: Mapping[str, int]) -> Qu
         for url in group:
             canonical[url] = head
     stubs = {url for url, texts in pages.items() if is_stub(texts, tokens.get(url, 0))}
-    return QualityReport(canonical=canonical, alias_groups=groups, stubs=stubs)
+    return QualityReport(
+        canonical=canonical,
+        alias_groups=groups,
+        stubs=stubs,
+        text_only_collisions=count_text_only_collisions(pages),
+    )

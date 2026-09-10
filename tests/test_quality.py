@@ -4,6 +4,7 @@ from corpus.quality import (
     alias_compatible,
     analyze,
     canonical_of,
+    count_text_only_collisions,
     find_alias_groups,
     is_stub,
     is_subsequence,
@@ -144,3 +145,40 @@ def test_analyze_reports_canonicals_and_stubs():
     assert r.status_of(u("torch.topk")) == STATUS_OK
     assert r.status_of("https://docs.pytorch.org/tutorials/old.html") == STATUS_STUB
     assert "alias groups: 1" in r.summary() and "stubs: 1" in r.summary()
+
+
+# --- text-identical pages that are not aliases ---------------------------------------------
+
+
+def test_text_only_collisions_counts_buckets_the_path_check_splits():
+    """Same normalized text, different device namespace: one bucket, two clusters."""
+    pages = {
+        "https://d/docs/2.14/generated/torch.cuda.current_device.html": ["same text"],
+        "https://d/docs/2.14/generated/torch.xpu.current_device.html": ["same text"],
+    }
+    assert count_text_only_collisions(pages) == 1
+    assert find_alias_groups(pages) == []  # and they are correctly not merged
+
+
+def test_a_genuine_alias_bucket_is_not_counted_as_a_collision():
+    pages = {
+        "https://d/docs/2.14/generated/torch.optim.Adam.html": ["same text"],
+        "https://d/docs/2.14/generated/torch.optim.adam.Adam_class.html": ["same text"],
+    }
+    assert count_text_only_collisions(pages) == 0
+    assert len(find_alias_groups(pages)) == 1
+
+
+def test_pages_with_distinct_text_are_never_collisions():
+    pages = {"https://d/a.html": ["one"], "https://d/b.html": ["two"]}
+    assert count_text_only_collisions(pages) == 0
+
+
+def test_a_bucket_holding_both_an_alias_pair_and_an_intruder_counts_once():
+    pages = {
+        "https://d/docs/2.14/generated/torch.optim.Adam.html": ["same text"],
+        "https://d/docs/2.14/generated/torch.optim.adam.Adam_class.html": ["same text"],
+        "https://d/docs/2.14/generated/torch.mtia.Adam.html": ["same text"],
+    }
+    assert count_text_only_collisions(pages) == 1
+    assert len(find_alias_groups(pages)) == 1  # the real pair still groups
