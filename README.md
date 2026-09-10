@@ -547,10 +547,18 @@ These are the reasons not to read the table as a clean measurement of retrieval 
 
 2. **The judgments are not reliable at the level the numbers imply.** Two blind re-grade
    probes measured how repeatable the grading is: grade 0 reproduced at 90%, grade 2 at 50%,
-   grade 1 at 30–45%. Three-way Cohen's κ = 0.09 — barely above chance. The two probes differ
-   in *both* the contrast used (1s against 0s versus 1s against 2s) and whether the written
-   rubric in `eval/GRADING.md` existed, so the change in grade-1 stability cannot be
-   attributed to either one alone (Fisher exact p = 0.514).
+   grade 1 at 45% in the first probe and 30% in the second. Three-way Cohen's κ is **0.0943
+   for the second probe** — barely above chance — against 0.3953 for the first and 0.3116
+   pooled. The κ worth quoting is the per-probe pair, not the pooled figure: the probes
+   differ in *both* the contrast used (1s against 0s versus 1s against 2s) and whether the
+   written rubric in `eval/GRADING.md` existed, so pooling averages over the very difference
+   in question. That same confound is why the drop in grade-1 stability cannot be attributed
+   to the rubric or the contrast alone (two-sided Fisher exact p = 0.5145 on 9/20 against
+   6/20 — there is not even a difference established to attribute).
+
+   ```
+   python -m eval.reliability     # matrices, reproduction rates, κ per probe, Fisher
+   ```
 
 3. **The judgment set is optimistically biased, not merely noisy.** Resampling all judgments
    under the measured re-grade transition matrices (4,000 draws, Dirichlet rows so the n=20
