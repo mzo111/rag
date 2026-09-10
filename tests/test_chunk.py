@@ -9,6 +9,8 @@ from corpus.chunk import (
     make_chunk_id,
     pack_blocks,
     percentile,
+    short_chunk_breakdown,
+    source_breakdown,
     summarize,
     word_count,
 )
@@ -334,3 +336,35 @@ def test_percentile_and_summary():
     assert s["chunks"] == 4 and s["tokens"] == 790 and s["pages"] == 3
     assert s["tokens_per_chunk"]["max"] == 600
     assert {h["range"]: h["count"] for h in s["histogram"]}["512+"] == 1
+
+
+# --- stats breakdowns -----------------------------------------------------------------------
+
+DOC = "https://docs.pytorch.org/docs/2.14/generated/torch.topk.html"
+TUT = "https://docs.pytorch.org/tutorials/beginner/basics/intro.html"
+
+
+def test_source_breakdown_splits_docs_from_tutorials():
+    rows = [(DOC, 3, 300), (DOC + "?x", 1, 40), (TUT, 2, 500)]
+    out = source_breakdown(rows)
+    assert out["docs"] == {"pages": 2, "pages_with_content": 2, "chunks": 4, "tokens": 340}
+    assert out["tutorials"] == {"pages": 1, "pages_with_content": 1, "chunks": 2, "tokens": 500}
+
+
+def test_source_breakdown_counts_an_empty_page_but_not_as_content():
+    out = source_breakdown([(DOC, 0, 0), (DOC + "?x", 1, 10)])
+    assert out["docs"]["pages"] == 2 and out["docs"]["pages_with_content"] == 1
+
+
+def test_short_chunks_separate_whole_pages_from_fragments():
+    """A page whose only chunk is short is an API stub; a short chunk beside others is not."""
+    rows = [(DOC, 1, 12), (TUT, 4, 900)]
+    out = short_chunk_breakdown(rows, {DOC: 1, TUT: 2}, 40)
+    assert out["under_min_tokens"] == 3
+    assert out["whole_page"] == 1  # DOC's single chunk
+    assert out["fragments"] == 2  # TUT's two short chunks among four
+
+
+def test_short_chunks_are_zero_when_nothing_is_short():
+    out = short_chunk_breakdown([(DOC, 2, 400)], {}, 40)
+    assert out == {"under_min_tokens": 0, "whole_page": 0, "fragments": 0, "min_tokens": 40}

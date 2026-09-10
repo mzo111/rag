@@ -628,6 +628,46 @@ def summarize(lengths: list[int], n_pages: int, n_empty: int) -> dict:
     }
 
 
+def source_breakdown(rows: list[tuple[str, int, int]]) -> dict:
+    """Pages, chunks and tokens per source, from ``(url, n_chunks, n_tokens)`` per page.
+
+    The README quotes docs and tutorials separately; without this they were only derivable
+    from `data/chunks.jsonl`, which is gitignored, so a clone could not check them.
+    """
+    from corpus.store import source_for_url
+
+    out: dict[str, dict[str, int]] = {}
+    for url, n_chunks, n_tokens in rows:
+        s = out.setdefault(
+            source_for_url(url), {"pages": 0, "pages_with_content": 0, "chunks": 0, "tokens": 0}
+        )
+        s["pages"] += 1
+        s["pages_with_content"] += 1 if n_chunks else 0
+        s["chunks"] += n_chunks
+        s["tokens"] += n_tokens
+    return out
+
+
+def short_chunk_breakdown(
+    rows: list[tuple[str, int, int]], short_by_page: dict[str, int], min_tokens: int
+) -> dict:
+    """How many chunks fall under ``min_tokens``, and how many of those are a whole page.
+
+    A one-signature API stub is a page whose entire content is one short chunk. Separating
+    those from short *fragments* is the point: the first is the corpus being what it is, the
+    second would be the packer misbehaving.
+    """
+    per_page = {url: n for url, n, _ in rows}
+    short = sum(short_by_page.values())
+    whole_page = sum(n for url, n in short_by_page.items() if per_page.get(url) == 1)
+    return {
+        "under_min_tokens": short,
+        "whole_page": whole_page,
+        "fragments": short - whole_page,
+        "min_tokens": min_tokens,
+    }
+
+
 def format_stats(stats: dict) -> str:
     t = stats["tokens_per_chunk"]
     lines = [
@@ -660,6 +700,8 @@ def main(argv: list[str] | None = None) -> int:
 
     count = default_token_counter()
     lengths: list[int] = []
+    per_page: list[tuple[str, int, int]] = []
+    short_by_page: dict[str, int] = {}
     n_pages = n_empty = 0
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", encoding="utf-8") as f:
@@ -671,12 +713,18 @@ def main(argv: list[str] | None = None) -> int:
             )  # fmt: skip
             if not chunks:
                 n_empty += 1
+            per_page.append((url, len(chunks), sum(c.n_tokens for c in chunks)))
+            short = sum(1 for c in chunks if c.n_tokens < args.min_tokens)
+            if short:
+                short_by_page[url] = short
             for c in chunks:
                 lengths.append(c.n_tokens)
                 f.write(json.dumps(asdict(c), ensure_ascii=False) + "\n")
             if n_pages % 500 == 0:
                 print(f"[{n_pages} pages, {len(lengths)} chunks]", file=sys.stderr, flush=True)
     stats = summarize(lengths, n_pages, n_empty)
+    stats["by_source"] = source_breakdown(per_page)
+    stats["short_chunks"] = short_chunk_breakdown(per_page, short_by_page, args.min_tokens)
     stats["params"] = {
         "target_tokens": args.target_tokens,
         "max_tokens": args.max_tokens,

@@ -58,6 +58,26 @@
    "count": 9
   }
  ],
+ "by_source": {
+  "docs": {
+   "pages": 3436,
+   "pages_with_content": 3433,
+   "chunks": 9058,
+   "tokens": 1596670
+  },
+  "tutorials": {
+   "pages": 248,
+   "pages_with_content": 245,
+   "chunks": 2774,
+   "tokens": 669818
+  }
+ },
+ "short_chunks": {
+  "under_min_tokens": 1257,
+  "whole_page": 1248,
+  "fragments": 9,
+  "min_tokens": 40
+ },
  "params": {
   "target_tokens": 350,
   "max_tokens": 512,

@@ -71,7 +71,9 @@ links pin **v2.14.0**) plus `https://docs.pytorch.org/tutorials/sitemap.xml` min
 and index/timing pages. Chunks store the versioned URL (`/docs/2.14/...`) since `stable` moves.
 `data/manifest.json` (committed) records the version, fetch date and the full URL list.
 
-Numbers from `data/stats.json` (fetched 2026-09-07, tiktoken `cl100k_base`):
+Numbers from `data/stats.json`, which is **tracked**, so these survive a clone that has not
+downloaded the corpus (fetched 2026-09-07, tiktoken `cl100k_base`). `python -m corpus.chunk`
+regenerates it, including the per-source split and the short-chunk breakdown below:
 
 | | pages | chunks | tokens |
 |---|---:|---:|---:|
@@ -101,8 +103,10 @@ Six pages have no chunkable content (pure toctree index pages). Chunk length in 
 
 The bump at 300-349 is the packer closing chunks at the 350-token target; the 450-511 tail is
 mostly single code blocks or tables that are atomic. Of the 1,257 chunks under 40 tokens,
-1,248 are whole pages (one-signature API stubs such as `torch.distributed.run.main`), which
-have nothing to merge with.
+**1,248 are whole pages** (one-signature API stubs such as `torch.distributed.run.main`),
+which have nothing to merge with; only 9 are short fragments sitting beside longer siblings.
+Both counts are `stats.json:short_chunks`, and the distinction is the point — the first
+number is the corpus being what it is, the second would be the packer misbehaving.
 
 ## Chunking strategy
 
