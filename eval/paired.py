@@ -155,16 +155,43 @@ def per_query_scores(
     n = len(runs)
     raw = np.empty(n)
     ceil = np.empty(n)
+    raw10 = np.empty(n)
+    ceil10 = np.empty(n)
     rr = np.empty(n)
     nd = np.empty(n)
     for i, (run, g) in enumerate(zip(runs, drawn, strict=True)):
         gd = dict(zip(run.keys, g.tolist(), strict=True))
         rel = int((g > 0).sum())
         raw[i] = recall_at_k(run.ranked, gd, RECALL_K)
+        raw10[i] = recall_at_k(run.ranked, gd, NDCG_K)
         rr[i] = mrr(run.ranked, gd)
         nd[i] = ndcg_at_k(run.ranked, gd, NDCG_K)
         ceil[i] = raw[i] / (min(RECALL_K, rel) / rel) if rel else np.nan
-    return {"recall5": raw, "recall5_ceil": ceil, "mrr": rr, "ndcg10": nd}
+        ceil10[i] = raw10[i] / (min(NDCG_K, rel) / rel) if rel else np.nan
+    return {
+        "recall5": raw,
+        "recall5_ceil": ceil,
+        "recall10": raw10,
+        "recall10_ceil": ceil10,
+        "mrr": rr,
+        "ndcg10": nd,
+    }
+
+
+def achievable_ceiling(runs: Sequence[QueryRun], k: int) -> dict[str, float]:
+    """Mean of min(k, R)/R over queries, overall and per category, on the judgments as they
+    stand. This is the highest recall@k any ranking could reach: with R relevant pages and
+    R > k, k slots cannot hold them all. Reported because a recall figure read against 1.0
+    rather than against this looks far worse than it is."""
+    out: dict[str, list[float]] = {"all": []}
+    for run in runs:
+        rel = int((run.grades > 0).sum())
+        if not rel:
+            continue
+        value = min(k, rel) / rel
+        out["all"].append(value)
+        out.setdefault(run.category, []).append(value)
+    return {g: float(np.mean(v)) for g, v in out.items() if v}
 
 
 def _nanmean(v: np.ndarray) -> float:
@@ -189,7 +216,7 @@ def bootstrap(
         if len(idx):
             groups[cat] = idx
 
-    metrics = ("recall5", "recall5_ceil", "mrr", "ndcg10")
+    metrics = ("recall5", "recall5_ceil", "recall10", "recall10_ceil", "mrr", "ndcg10")
     pairs = [(a, b) for a, b in PAIRS if a in cache and b in cache]
     marg = {(s, g, m): np.empty(draws) for s in names for g in groups for m in metrics}
     diff = {(a, b, g, m): np.empty(draws) for a, b in pairs for g in groups for m in metrics}
@@ -237,14 +264,70 @@ def ci(v: np.ndarray) -> tuple[float, float, float]:
     return float(lo), float(med), float(hi)
 
 
+def format_observed(cache: dict) -> str:
+    """The metrics on the judgments as they stand, with no resampling.
+
+    These are the columns the README's results table quotes. They were previously assembled
+    by hand from `eval.run` (raw metrics) and a ceiling computed here but never printed, so
+    the of-ceiling columns had no producer at all.
+
+    **Of-ceiling is reported two ways, because the two disagree.** `agg` divides the mean
+    recall by the mean ceiling, treating the query set as one pool; `per-q` averages each
+    query's own recall/ceiling ratio. They differ by up to 4 points here, most where the
+    ceiling varies widely across queries within a group. The resampled `recall5_ceil` metric
+    below is the `per-q` form, so a figure quoted from that section is not comparable to an
+    `agg` figure from this one.
+    """
+    L = [
+        f"{'system':<14}{'group':<12}{'R@5':>8}{'ceil agg':>10}{'ceil per-q':>12}"
+        f"{'R@10':>8}{'ceil agg':>10}{'ceil per-q':>12}{'MRR':>8}{'nDCG@10':>9}"
+    ]
+    L.append("-" * len(L[0]))
+    for name, runs in cache.items():
+        scores = per_query_scores(runs, [r.grades for r in runs])
+        groups = {"all": list(range(len(runs)))}
+        for cat in CATEGORIES:
+            idx = [i for i, r in enumerate(runs) if r.category == cat]
+            if idx:
+                groups[cat] = idx
+        ceil5 = achievable_ceiling(runs, RECALL_K)
+        ceil10 = achievable_ceiling(runs, NDCG_K)
+        for g, idx in groups.items():
+            sel = {m: v[idx] for m, v in scores.items()}
+            r5, r10 = _nanmean(sel["recall5"]), _nanmean(sel["recall10"])
+            agg5 = r5 / ceil5[g] if ceil5.get(g) else 0.0
+            agg10 = r10 / ceil10[g] if ceil10.get(g) else 0.0
+            L.append(
+                f"{name if g == 'all' else '':<14}{g:<12}"
+                f"{r5:>8.3f}{agg5:>10.3f}{_nanmean(sel['recall5_ceil']):>12.3f}"
+                f"{r10:>8.3f}{agg10:>10.3f}{_nanmean(sel['recall10_ceil']):>12.3f}"
+                f"{_nanmean(sel['mrr']):>8.3f}{_nanmean(sel['ndcg10']):>9.3f}"
+            )
+    return "\n".join(L)
+
+
 def format_report(res: dict, wlt: dict, cache: dict) -> str:
     L: list[str] = []
     names, groups, pairs = res["names"], res["groups"], res["pairs"]
     marg, diff = res["marginal"], res["diff"]
 
-    L.append("PRIMARY: recall@5\n")
-    for label, metric in (("raw", "recall5"), ("of ceiling", "recall5_ceil")):
-        L.append(f"-- marginal (unpaired) intervals, recall@5 {label} --")
+    if cache:
+        runs0 = next(iter(cache.values()))
+        for k in (RECALL_K, NDCG_K):
+            ceilings = achievable_ceiling(runs0, k)
+            row = "  ".join(f"{g} {v:.3f}" for g, v in ceilings.items())
+            L.append(f"achievable recall@{k} on the judgments as they stand: {row}")
+        L.append("  (mean of min(k, R)/R; the ceiling the 'of ceiling' columns divide by)")
+        L.append("")
+
+    L.append("PRIMARY: recall@5 (recall@10 reported alongside, not used for ranking)\n")
+    for label, metric in (
+        ("recall@5 raw", "recall5"),
+        ("recall@5 of ceiling", "recall5_ceil"),
+        ("recall@10 raw", "recall10"),
+        ("recall@10 of ceiling", "recall10_ceil"),
+    ):
+        L.append(f"-- marginal (unpaired) intervals, {label} --")
         L.append(f"{'group':<12}" + "".join(f"{s:>26}" for s in names))
         for g in groups:
             row = f"{g:<12}"
@@ -253,7 +336,7 @@ def format_report(res: dict, wlt: dict, cache: dict) -> str:
                 row += f"{med:>10.3f} [{lo:.3f},{hi:.3f}]"
             L.append(row)
         L.append("")
-        L.append(f"-- PAIRED intervals on the difference, recall@5 {label} --")
+        L.append(f"-- PAIRED intervals on the difference, {label} --")
         L.append(
             f"{'group':<12}{'comparison':<18}{'median':>9}{'2.5%':>9}"
             f"{'97.5%':>9}{'width':>8}  verdict"
@@ -363,6 +446,9 @@ def main(argv: list[str] | None = None) -> int:
     res = bootstrap(cache, counts, draws=args.draws, seed=args.seed)
     wlt = win_loss_tie(cache)
     print(f"{len(queries)} queries, {args.draws} draws, shared judgment + query resampling\n")
+    print("OBSERVED, judgments as they stand (no resampling)\n")
+    print(format_observed(cache))
+    print()
     print(format_report(res, wlt, cache))
 
     if args.json:

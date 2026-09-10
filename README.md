@@ -333,9 +333,23 @@ rather than extending it.** No retriever changed and no ranking changed; the den
 |  | tutorial | 0.346 | 0.93 | 0.647 | 0.88 | 0.933 |  |
 
 **Read recall against its ceiling, not against 1.0.** With 11.6 relevant pages per query on
-average, five slots cannot hold them all: the achievable recall@5 is 0.488 overall (0.690 for
-`api_lookup`, down to 0.372 for `tutorial` and 0.375 for `multi_hop`). The "of ceiling"
-columns are the fraction of what was reachable.
+average, five slots cannot hold them all. `eval.paired` prints the ceiling it divides by:
+
+```
+achievable recall@5:   all 0.488  api_lookup 0.690  conceptual 0.452  multi_hop 0.375  tutorial 0.372
+achievable recall@10:  all 0.832  api_lookup 0.973  conceptual 0.826  multi_hop 0.750  tutorial 0.733
+```
+
+**Two different "of ceiling" figures appear in this README, and they are not comparable.**
+The table above divides mean recall by mean ceiling, pooling the group. The paired-comparison
+and reranking sections below quote the resampled `recall5_ceil` metric, which averages each
+query's *own* recall/ceiling ratio. They differ by up to 4 points — BM25 overall is 0.803 the
+first way and 0.842 the second. `eval.paired` now prints both, as `ceil agg` and
+`ceil per-q`, so which one a figure came from is visible rather than inferred.
+
+```
+python -m eval.paired --offline    # the whole table above, both ceiling forms, and the intervals
+```
 
 **Raw recall@5 fell for every system, and that is the pool growing, not the retrievers
 regressing.** BM25 went 0.448 → 0.392 and hybrid 0.449 → 0.396 without a single ranking
@@ -573,11 +587,24 @@ These are the reasons not to read the table as a clean measurement of retrieval 
 
 3. **The judgment set is optimistically biased, not merely noisy.** Resampling all judgments
    under the measured re-grade transition matrices (4,000 draws, Dirichlet rows so the n=20
-   behind each row is priced in) puts the observed MRR (0.988) and nDCG@10 (0.898 on the
-   400-judgment set) *above the 97.5th percentile* of the resampled distribution. A re-grade
-   would not scatter these numbers around their current values; it would move them down.
-   recall@5 (0.578) sat inside its interval, because its denominator shrinks along with the
-   relevant set — which is why recall@5 is the primary metric here.
+   behind each row is priced in) puts BM25's observed MRR and nDCG@10 *above the 97.5th
+   percentile* of their resampled distributions. Re-measured on the current 814 judgments:
+
+   | metric | observed | resampled median | resampled 95% | verdict |
+   |---|---:|---:|---:|---|
+   | MRR | 0.988 | 0.873 | [0.729, 0.966] | **above** |
+   | nDCG@10 | 0.802 | 0.603 | [0.511, 0.686] | **above** |
+   | recall@5 | 0.392 | 0.375 | [0.304, 0.463] | inside |
+
+   A re-grade would not scatter the first two around their current values; it would move them
+   down. recall@5 sits inside its interval because its denominator shrinks along with the
+   relevant set — which is why recall@5 is the primary metric here. The earlier version of
+   this limitation quoted MRR 0.988, nDCG 0.898 and recall@5 0.578 on the retired
+   400-judgment pool; the conclusion is unchanged, the numbers are not.
+
+   ```
+   python -m eval.paired --offline      # observed table, then the resampled intervals
+   ```
 
 4. **Every interval above is a floor.** The bootstrap treats grading error as independent
    across judgments. Real error is correlated within a query: a shift in how a query is read
