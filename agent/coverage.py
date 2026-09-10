@@ -135,12 +135,18 @@ RE_POOL_HEADER = """\
 """
 
 
-def build_systems(names: Sequence[str], store, client) -> dict[str, object]:
+def build_systems(names: Sequence[str], store, client, *, scorer=None) -> dict[str, object]:
     """``label -> retriever`` for names like ``hybrid`` or ``agent/hybrid``.
 
     Base retrievers are built once and shared, so ``hybrid`` and ``agent/hybrid`` are the
     same object and the dense model is loaded once rather than per system. The agents share
     one model client for the same reason.
+
+    ``scorer`` is passed straight to :class:`~retrieval.rerank.RerankRetriever`, which builds
+    a real cross-encoder when given none. It exists so the composition can be tested without
+    sentence-transformers installed, the same way the dense tests inject an encoder: CI
+    installs `requirements.txt` only, so a test that constructs a real scorer can pass
+    locally and fail there.
     """
     bases: dict[str, object] = {}
 
@@ -163,7 +169,7 @@ def build_systems(names: Sequence[str], store, client) -> dict[str, object]:
 
             # Built on the shared base, so `hybrid` and `rerank/hybrid` read the same
             # first stage and the difference in coverage is the reranking alone.
-            out[name] = RerankRetriever(store, base_for(name[len(RERANK_PREFIX) :]))
+            out[name] = RerankRetriever(store, base_for(name[len(RERANK_PREFIX) :]), scorer)
         else:
             out[name] = base_for(name)
     return out

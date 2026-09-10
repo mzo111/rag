@@ -667,12 +667,40 @@ def test_systems_lists_every_poolable_system():
     }
 
 
+class FakeScorer:
+    """Stands in for the cross-encoder. Never loaded, so no torch is needed.
+
+    Injected rather than skipped: CI installs `requirements.txt` only, and a test that builds
+    a real CrossEncoderScorer would import sentence-transformers and pass locally while
+    failing there. Same guard the dense tests use when they inject an encoder.
+    """
+
+    name = "fake-scorer"
+    device = "cpu"
+    batch_size = 1
+
+    def score(self, query, texts):
+        return [0.0] * len(texts)
+
+
 def test_build_systems_gives_a_reranker_the_shared_base(store):
     """rerank/bm25 must reorder the same first stage `bm25` uses, or the coverage
     difference between them would confound reranking with a different base."""
-    systems = build_systems(["bm25", "rerank/bm25"], store, FakeClient())
+    systems = build_systems(["bm25", "rerank/bm25"], store, FakeClient(), scorer=FakeScorer())
     assert not isinstance(systems["bm25"], AgentRetriever)
     assert systems["rerank/bm25"].base is systems["bm25"]
+
+
+def test_build_systems_does_not_load_a_cross_encoder_when_given_a_scorer(store):
+    """The guard itself: the injected scorer is the one that ends up on the retriever.
+
+    Over a bm25 base rather than hybrid: hybrid builds a dense retriever, which needs
+    sentence-transformers, so testing the scorer over it would reintroduce the very import
+    this test exists to avoid.
+    """
+    scorer = FakeScorer()
+    systems = build_systems(["rerank/bm25"], store, FakeClient(), scorer=scorer)
+    assert systems["rerank/bm25"].scorer is scorer
 
 
 def test_build_systems_makes_random_a_seeded_baseline(store):
