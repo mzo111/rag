@@ -25,6 +25,9 @@ agent/llm.py        Ollama HTTP client + committed on-disk response cache
 agent/prompts.py    the two prompts, first draft, frozen
 agent/run.py        run the agent over the query set: routes, fallbacks, latency split
 agent/coverage.py   how much of what the agent retrieves has never been judged
+generate/prompts.py three prompts (answer, decompose, check), first draft, frozen
+generate/run.py     answer a query from a retriever's top-k chunks, with citations
+generate/faithfulness.py  claim-level groundedness, plus the refusal probe
 ```
 
 ## Setup
@@ -47,6 +50,13 @@ The agent layer is optional and installs separately, like the embedder:
 ollama serve && ollama pull qwen2.5:7b        # only needed for live calls
 .venv/bin/python -m agent.run --offline                    # replays the committed cache
 .venv/bin/python -m agent.coverage --offline --baseline    # unjudged-page audit
+```
+
+Generation shares those dependencies and that cache machinery; it needs no others:
+
+```bash
+.venv/bin/python -m generate.run --retriever hybrid --offline -v   # answers, from cache
+.venv/bin/python -m generate.faithfulness --all --offline          # the whole table
 ```
 
 CI (`.github/workflows/ci.yml`): `ruff check`, `ruff format --check`, `pytest -q`. The test
@@ -792,6 +802,154 @@ recall@5 down.
 recoverable, and every other `eval/*.yaml` is one. Nothing in `agent/` modifies a judgment
 file.
 
+## Generation
+
+`generate/` answers a query from a retriever's top-k chunks with `qwen2.5:7b` over Ollama —
+the same local setup, client and cache machinery as the agent (`agent/llm.py`). The stage is
+deliberately thin: it does not re-rank, re-retrieve or reformulate, so a difference in what
+comes out is attributable to the retriever that fed it rather than to the generator.
+
+Every sentence must cite the passages it came from as `[C1]`, and when the passages do not
+contain the answer the model must emit `INSUFFICIENT_CONTEXT` and refuse.
+
+```
+python -m generate.run --retriever hybrid -v            # answers, live
+python -m generate.faithfulness --all --offline         # the table below, from the cache
+```
+
+**Fixed a priori, asserted in `tests/test_generate.py`.** k = 10 (the harness's k, so
+retrieval and generation see the same depth), temperature 0, `num_ctx` 8192, `num_predict`
+400, at most 8 claims per answer, the refusal marker's exact spelling, and the mismatch
+rotation of +20. The three prompts are pinned **by SHA-256**: editing one fails a test with a
+message saying to re-measure rather than to re-word. None of these was chosen by looking at a
+result, and none was moved after seeing one — including the two that, as it turns out, would
+have improved the headline number.
+
+The cache (`generate/cache/generation.json`, 807 entries, 440 KB) is keyed by
+`(model, prompt, query, retriever)` and committed, so `--offline` replays all of this with no
+Ollama and no GPU. Building it cost 29.2 minutes of model time and 1.53 M tokens.
+
+### Faithfulness: is each claim in the answer stated by the retrieved passages?
+
+No new human judgments. Each answer is split into atomic claims by one model call that never
+sees the passages, and each claim is then checked against the passages by a second call that
+never sees the question. Keeping them apart is the point: a decomposer that could see the
+passages would shape claims to check out, and a checker that could see the question would
+drift from "is this stated" to "does this answer the question".
+
+200 answers over 40 queries × 5 retrievers produced **721 claims**.
+
+| retriever | claims | judged | support, unjudged = unsupported | support, judged only |
+|---|---:|---:|---:|---:|
+| bm25 | 131 | 83 | **0.542** [0.46, 0.63] | **0.855** [0.79, 0.92] |
+| dense | 166 | 134 | **0.639** [0.55, 0.72] | **0.791** [0.72, 0.85] |
+| hybrid | 131 | 104 | **0.656** [0.55, 0.75] | **0.827** [0.75, 0.89] |
+| rerank | 155 | 111 | **0.600** [0.50, 0.69] | **0.838** [0.78, 0.89] |
+| agent | 138 | 100 | **0.616** [0.51, 0.73] | **0.850** [0.78, 0.91] |
+
+Intervals are a 4,000-draw bootstrap resampling **queries**, not claims, because claims
+inside one answer stand or fall together.
+
+**Two columns, because the checker did not judge 26% of the claims.** On answers with three
+or more claims it routinely returns a `verdicts` list shorter than the claim list — 189 of
+721 claims came back unjudged. This is not output truncation: the longest support response
+was 188 tokens against a 400-token cap. The left column counts an unjudged claim as
+unsupported, the right one drops it. The true rate is bracketed by the pair; neither column
+is "the" faithfulness rate.
+
+**The two readings reverse the ranking, so do not read one.** BM25 is last on the left
+(0.542) and first on the right (0.855), because its answers had the largest share of claims
+left unjudged (83 of 131, against dense's 134 of 166). The apparent spread between retrievers
+is mostly a checker artifact tracking claims-per-answer, not a difference in how faithfully
+each retriever's context gets used. Every interval on the left overlaps every other.
+
+What the failures look like, from the lowest-scoring hybrid answer (q20, `.contiguous()`):
+the first claim quotes the docstring and is supported; the three that follow — when you
+*need* to call it — are the model completing the topic from prior knowledge. The passages
+never say them. That is the failure mode the metric exists to catch, and it is invisible to
+recall@k, which scores that same retrieval as a hit.
+
+### Refusal: does it decline when the passages cannot answer?
+
+Measuring this needs contexts that provably lack the answer, without labelling any. Each
+query is re-asked over the passages retrieved for a **different** query, under a fixed
+rotation of +20 over the 40. A pair is dropped when the donor passages contain a page the
+*existing* judgments already mark relevant (grade ≥ 1) for the recipient query — that check
+reads `eval/queries.yaml` and writes nothing.
+
+| retriever | refusals on real context | probe pairs | dropped | correct refusal |
+|---|---:|---:|---:|---:|
+| bm25 | 5/40 | 36 | 4 | **36/36 = 1.000** |
+| dense | 2/40 | 35 | 5 | **35/35 = 1.000** |
+| hybrid | 2/40 | 34 | 6 | **34/34 = 1.000** |
+| rerank | 4/40 | 35 | 5 | **34/35 = 0.971** |
+| agent | 2/40 | 35 | 5 | **35/35 = 1.000** |
+
+174 of 175 probe pairs refused. **Read this as a floor, not a score**: mismatched context is
+the easy case. A page about `torch.topk` offered against a question on random seeding is
+obviously off-topic, and a model that refuses there may still answer confidently from a
+passage that is plausibly on-topic but silent on the specific question. That harder case —
+near-miss retrieval — is the one that matters in production and is not measured here.
+
+It also refuses on genuinely retrieved context 15 times out of 200 (q06, "set the random seed
+for CPU and every GPU at once", among them). Whether those are correct abstentions or lost
+answers is not established: it would need the graded judgments for those queries read against
+the answer, which is a different measurement.
+
+### Latency and tokens
+
+Per query, measured live on an RTX 4060 Ti. Retrieval is measured on every run; model time is
+the live call's duration.
+
+| retriever | answer p50 | answer p90 | retrieval p50 | prompt tok | completion tok | tok/query |
+|---|---:|---:|---:|---:|---:|---:|
+| bm25 | 3.2 s | 4.4 s | 9 ms | 2,759 | 93 | 2,853 |
+| dense | 2.7 s | 5.6 s | 35 ms | 2,204 | 107 | 2,312 |
+| hybrid | 2.8 s | 4.5 s | 39 ms | 2,574 | 101 | 2,675 |
+| rerank | 3.2 s | 5.2 s | 2,356 ms | 2,654 | 96 | 2,749 |
+| agent | 5.4 s | 7.7 s | 4,043 ms | 2,442 | 99 | 2,541 |
+
+Retrieval latency spans three orders of magnitude — 9 ms for BM25 against 2.4 s for the
+reranker and 4.0 s for the agent — while the generation cost barely moves, because all five
+send the model the same ten passages. Faithfulness scoring costs a further two calls per
+answer, which is why the full sweep is 807 cached calls rather than 200.
+
+### What this measures, and what it does not
+
+1. **Faithfulness is groundedness in retrieved text, not correctness.** A claim counts as
+   supported when a retrieved passage states it. An answer that faithfully reproduces a
+   wrong, outdated or irrelevant chunk scores 1.0, and an answer that is entirely correct
+   about PyTorch but says something the passages omit scores 0. Nothing here checks whether
+   the retrieved page was the right page — that is what the 814 hand judgments and
+   `eval/run.py` measure, on a different axis. **Neither number substitutes for the other,
+   and a system can be excellent on one and useless on the other.**
+
+2. **The checker is the same model family as the generator, so it shares its blind spots.**
+   `qwen2.5:7b` judges `qwen2.5:7b`. Where the generator misreads a passage, the checker is
+   disposed to misread it the same way and call the claim supported. This biases the support
+   rate **up** by an amount nothing here bounds. The rates are comparable *between*
+   retrievers, which share the checker, and are not absolute levels. An independent checker —
+   a different family, or a human pass over a sample — is the only thing that would fix this,
+   and neither has been run.
+
+3. **The checker left 26% of claims unjudged**, and which claims go unjudged tracks how many
+   claims an answer has, which differs by retriever. That is enough to reverse the ranking
+   between the two readings above. Until it is fixed, this measurement cannot rank retrievers
+   by faithfulness at all — it can only say that all five sit somewhere in a wide band.
+
+4. **The refusal probe measures the easy case.** Mismatched contexts are off-topic in an
+   obvious way. The near-miss — a plausibly related passage that does not contain the answer —
+   is untested, and is where a refusal mechanism actually earns its keep.
+
+5. **One model, one run, 40 queries.** Temperature is 0, so a cached replay is exact, but a
+   fresh run is reproducible only up to Ollama's numerics. Nothing here is a claim about
+   generation in general; it is a claim about this model on this corpus at this k.
+
+6. **The claims are the model's own decomposition.** An answer split into 3 claims and the
+   same answer split into 6 are not scored on the same denominator, and the decomposer is
+   never checked against a human split. The claim counts in the table above are inputs to the
+   metric, not properties of the answers.
+
 ## Next
 
 1. ~~Grade `eval/pool.yaml` and merge it.~~ Done 2026-09-08.
@@ -841,3 +999,16 @@ file.
    default policy, so the flags would not reach the stage being measured. Passing
    `--keep-aliases` to any of the four is an error rather than a silent no-op, since a
    silently ignored flag reads as an ablation that measured nothing.
+8. **Fix the faithfulness checker before quoting a faithfulness ranking.** It leaves 26% of
+   claims unjudged, the share differs by retriever, and the two defensible ways of handling
+   that reverse the order of the five systems. The fix is not a prompt edit chased against
+   the score: judge one claim per call, or have the checker echo the claim text it is
+   judging, then re-measure everything in the generation section. Until then that section
+   supports "all five sit in a wide band" and nothing narrower.
+9. **Check refusal on near-miss context, not just mismatched context.** 174 of 175 mismatched
+   pairs refused, which measures the easy case. The case that matters is a passage on the
+   right topic that is silent on the specific question; building that set needs the existing
+   grade-0 judgments, which are already written and unused for this.
+10. **Get an independent faithfulness checker.** Same-family checking biases the support rate
+    up by an unbounded amount. A human pass over a sample of the 721 claims would bound it,
+    and is the smallest thing that would turn these rates into levels rather than contrasts.

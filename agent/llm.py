@@ -67,9 +67,12 @@ class ResponseCache:
                 self._data = {}
 
     @staticmethod
-    def key(model: str, prompt: str, query: str) -> str:
+    def key(model: str, prompt: str, query: str, retriever: str = "") -> str:
+        """Cache key over the full call. ``retriever`` is appended only when given, so keys
+        written before it existed still resolve; :mod:`generate` always passes it."""
         h = hashlib.sha256()
-        for part in (model, prompt, query):
+        parts = (model, prompt, query) if not retriever else (model, prompt, query, retriever)
+        for part in parts:
             h.update(part.encode("utf-8"))
             h.update(b"\x00")
         return h.hexdigest()
@@ -151,9 +154,22 @@ class OllamaClient:
                 f"Available: {', '.join(sorted(names)) or '(none)'}"
             )
 
-    def generate(self, prompt: str, *, query: str, json_mode: bool = True) -> Response:
-        """Return a completion, from cache when possible."""
-        key = self.cache.key(self.model, prompt, query)
+    def generate(
+        self,
+        prompt: str,
+        *,
+        query: str,
+        json_mode: bool = True,
+        retriever: str = "",
+        options: dict | None = None,
+    ) -> Response:
+        """Return a completion, from cache when possible.
+
+        ``retriever`` widens the cache key; ``options`` merges into Ollama's options block
+        (temperature always wins from this client). Both default to the pre-existing
+        behaviour, so the agent's committed cache keeps resolving unchanged.
+        """
+        key = self.cache.key(self.model, prompt, query, retriever)
         hit = self.cache.get(key)
         if hit is not None:
             self.cache_hits += 1
@@ -168,7 +184,7 @@ class OllamaClient:
             "model": self.model,
             "prompt": prompt,
             "stream": False,
-            "options": {"temperature": self.temperature},
+            "options": {**(options or {}), "temperature": self.temperature},
         }
         if json_mode:
             payload["format"] = "json"
@@ -192,5 +208,8 @@ class OllamaClient:
             seconds=elapsed,
             cached=False,
         )
-        self.cache.put(key, response, meta={"model": self.model, "query": query})
+        meta = {"model": self.model, "query": query}
+        if retriever:
+            meta["retriever"] = retriever
+        self.cache.put(key, response, meta=meta)
         return response
