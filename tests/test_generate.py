@@ -315,11 +315,13 @@ def test_verdicts_align_to_claims_by_number():
     ]
 
 
-def test_an_unjudged_claim_counts_as_unsupported():
-    """Dropping it instead would raise the support rate by discarding the hard cases."""
+def test_an_unjudged_claim_counts_as_unsupported_but_is_marked_unjudged():
+    """Dropping it instead would raise the support rate by discarding the hard cases, and
+    conflating it with a real 'no' would hide how much of the rate is checker silence."""
     raw = json.dumps({"verdicts": [{"claim": 1, "supported": True, "passage": 1}]})
     verdicts, bad = parse_verdicts(raw, ["a", "b"], K)
     assert len(verdicts) == 2 and verdicts[1].supported is False
+    assert verdicts[0].judged is True and verdicts[1].judged is False
     assert "1 claim(s) unjudged" in bad
 
 

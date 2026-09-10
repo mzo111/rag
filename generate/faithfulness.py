@@ -57,6 +57,10 @@ class Verdict:
     claim: str
     supported: bool
     passage: int | None = None
+    # False when the checker returned no verdict for this claim and it was filled in as
+    # unsupported. Kept per-claim rather than as a count so a report can separate "the
+    # checker said no" from "the checker did not answer", which are different failures.
+    judged: bool = True
 
 
 @dataclass
@@ -78,6 +82,10 @@ class Checked:
     @property
     def n_claims(self) -> int:
         return len(self.verdicts)
+
+    @property
+    def n_judged(self) -> int:
+        return sum(v.judged for v in self.verdicts)
 
 
 def parse_claims(raw: str, max_claims: int) -> tuple[list[str], str]:
@@ -104,10 +112,10 @@ def parse_verdicts(raw: str, claims: list[str], k: int) -> tuple[list[Verdict], 
     try:
         body = json.loads(raw)
     except json.JSONDecodeError as exc:
-        return [Verdict(c, False) for c in claims], f"invalid JSON: {exc.msg}"
+        return [Verdict(c, False, None, judged=False) for c in claims], f"invalid JSON: {exc.msg}"
     rows = body.get("verdicts") if isinstance(body, dict) else None
     if not isinstance(rows, list):
-        return [Verdict(c, False) for c in claims], "missing 'verdicts' list"
+        return [Verdict(c, False, None, judged=False) for c in claims], "missing 'verdicts' list"
 
     seen: dict[int, Verdict] = {}
     for row in rows:
@@ -123,7 +131,9 @@ def parse_verdicts(raw: str, claims: list[str], k: int) -> tuple[list[Verdict], 
         passage = passage if isinstance(passage, int) and 1 <= passage <= k else None
         seen[n] = Verdict(claims[n - 1], bool(row.get("supported")), passage)
 
-    verdicts = [seen.get(i + 1, Verdict(c, False)) for i, c in enumerate(claims)]
+    verdicts = [
+        seen.get(i + 1, Verdict(c, False, None, judged=False)) for i, c in enumerate(claims)
+    ]
     missing = len(claims) - len(seen)
     return verdicts, f"{missing} claim(s) unjudged, counted unsupported" if missing else ""
 

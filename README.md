@@ -19,6 +19,7 @@ eval/metrics.py     recall@k, MRR, nDCG@10 (pure functions, hand-computed tests)
 eval/run.py         harness: any object with search(query, k) -> metrics table
 eval/pool.py        build a judging pool from retriever output, merge/append grades back
 eval/paired.py      paired bootstrap: every system scored on one shared judgment draw
+eval/alias_slots.py how many top-k slots are a page the retriever already returned
 eval/GRADING.md     the written grading rubric
 agent/graph.py      decompose/route state graph, RRF fusion over sub-query results
 agent/llm.py        Ollama HTTP client + committed on-disk response cache
@@ -28,6 +29,7 @@ agent/coverage.py   how much of what the agent retrieves has never been judged
 generate/prompts.py three prompts (answer, decompose, check), first draft, frozen
 generate/run.py     answer a query from a retriever's top-k chunks, with citations
 generate/faithfulness.py  claim-level groundedness, plus the refusal probe
+generate/report.py  the generation section's tables, with bootstrap intervals
 ```
 
 ## Setup
@@ -164,7 +166,11 @@ mentions deprecation in passing and must not be caught.
 
 This is not cosmetic. In the unfiltered BM25 baseline, **161 of 400 result slots (40%) across
 the 40 queries were duplicate alias pages**, and 39 of 40 queries had their top 10 change once
-aliases were collapsed. Stubs cost only 1 slot. Judgments written against an uncleaned corpus
+aliases were collapsed. Stubs cost only 1 slot. All four counts come from:
+
+```
+python -m eval.alias_slots            # 161 / 400, 39 of 40, 1 stub slot, and the 162 below
+``` Judgments written against an uncleaned corpus
 would have had to list every alias of every answer to score correctly.
 
 ## Retrieval
@@ -854,13 +860,19 @@ drift from "is this stated" to "does this answer the question".
 | retriever | claims | judged | support, unjudged = unsupported | support, judged only |
 |---|---:|---:|---:|---:|
 | bm25 | 131 | 83 | **0.542** [0.46, 0.63] | **0.855** [0.79, 0.92] |
-| dense | 166 | 134 | **0.639** [0.55, 0.72] | **0.791** [0.72, 0.85] |
-| hybrid | 131 | 104 | **0.656** [0.55, 0.75] | **0.827** [0.75, 0.89] |
-| rerank | 155 | 111 | **0.600** [0.50, 0.69] | **0.838** [0.78, 0.89] |
+| dense | 166 | 134 | **0.639** [0.55, 0.72] | **0.791** [0.73, 0.85] |
+| hybrid | 131 | 104 | **0.656** [0.56, 0.76] | **0.827** [0.75, 0.89] |
+| rerank | 155 | 111 | **0.600** [0.50, 0.70] | **0.838** [0.78, 0.89] |
 | agent | 138 | 100 | **0.616** [0.51, 0.73] | **0.850** [0.78, 0.91] |
 
 Intervals are a 4,000-draw bootstrap resampling **queries**, not claims, because claims
-inside one answer stand or fall together.
+inside one answer stand or fall together. Every table in this section, including the
+by-category and citation tables below, is printed by:
+
+```
+python -m generate.faithfulness --all --offline --json record.json
+python -m generate.report record.json
+```
 
 **Two columns, because the checker did not judge 26% of the claims.** On answers with three
 or more claims it routinely returns a `verdicts` list shorter than the claim list — 189 of
@@ -961,8 +973,16 @@ the answer, which is a different measurement.
 
 ### Latency and tokens
 
-Per query, measured live on an RTX 4060 Ti. Retrieval is measured on every run; model time is
-the live call's duration.
+Per query, **measured on the live run**, on an RTX 4060 Ti.
+
+The two halves of this table reproduce differently, which matters for anyone re-running it.
+Model timings are stored with the response, so `generate.report` prints the same figures from
+the cache. **Retrieval timings are measured fresh on every run and are not reproducible from
+the cache at all** — most sharply for the agent, which retrieves *by calling the model*, so an
+`--offline` replay serves those calls from disk and reports 59 ms where the live run took
+4,043 ms. The replay's other retrieval figures drift for the ordinary reason that they are
+re-measured: bm25 5 ms against 9 ms live, rerank 1,945 ms against 2,356 ms. `generate.report`
+prints a warning when it detects an all-cached record, so the distinction is hard to miss.
 
 | retriever | answer min / p50 / p90 / max | retrieval p50 | end-to-end p50 | prompt tok | completion tok | tok/query |
 |---|---|---:|---:|---:|---:|---:|
@@ -1046,8 +1066,10 @@ answer, which is why the full sweep is 807 cached calls rather than 200.
    Re-measured on the current 814 judgments, the cost of not collapsing is a drop in R@10
    from **0.675 to 0.443** for BM25 (R@5 0.392 -> 0.343, nDCG@10 0.802 -> 0.659) and from
    **0.588 to 0.381** for dense (R@5 0.371 -> 0.318, nDCG@10 0.761 -> 0.621). With aliases
-   kept, 162 of BM25's 400 top-10 slots are a page it had already returned, which is where
-   the recall goes. Both arms reproduce from the committed CLI:
+   kept, 162 of BM25's 400 top-10 slots are a page it had already returned
+   (`python -m eval.alias_slots`), which is where the recall goes. That count is 162 rather
+   than the 161 quoted under [Corpus quality](#corpus-quality) because this arm still
+   excludes stubs, and the one slot a stub occupies displaces a duplicate. Both arms reproduce from the committed CLI:
 
    ```
    # R@10 over all 40 queries, 814 judgments
