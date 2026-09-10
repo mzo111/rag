@@ -215,10 +215,22 @@ Apache-2.0, no `trust_remote_code`). Chosen on size and benchmarks, not download
 
 | model | params | max seq | BEIR nDCG@10 | CoIR (code) nDCG@10 |
 |---|---:|---:|---:|---:|
-| all-MiniLM-L6-v2 | 22.7M | 128 trained / 256 cap | ~41.9 | — |
-| bge-base-en-v1.5 | 109M | 512 | 53.2 | — |
-| snowflake-arctic-embed-m-v2.0 | 305M+ | 512 | ~55.5 | — |
-| **gte-modernbert-base** | **149M** | **8192** | **55.33** | **79.31** |
+| [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) | 22.7M | 128 trained / 256 cap | ~41.9 † | — |
+| [bge-base-en-v1.5](https://huggingface.co/BAAI/bge-base-en-v1.5) | 109M | 512 | 53.2 † | — |
+| [snowflake-arctic-embed-m-v2.0](https://huggingface.co/Snowflake/snowflake-arctic-embed-m-v2.0) | 305M+ | 512 | ~55.5 † | — |
+| **[gte-modernbert-base](https://huggingface.co/Alibaba-NLP/gte-modernbert-base)** | **149M** | **8192** | **55.33** ‡ | **79.31** ‡ |
+
+**Every score in this table is a published benchmark result, cited and not measured here.**
+Nothing in this repo reproduces them, and no run in this README checks them; they are the
+stated reason for a model choice, not evidence about this corpus. The only numbers this repo
+measures for these models are the retrieval results further down, on 40 PyTorch-docs queries.
+
+‡ Reported on the model's own card (`BEIR(NDCG@10)` and `COIR (Code Retrieval Task)(NDCG@10)`
+sections), linked above. † Not on the model's card: these are the retrieval average from the
+[MTEB leaderboard](https://huggingface.co/spaces/mteb/leaderboard), which moves as models and
+datasets are added — the two `~` figures were approximate when written and `53.2` is the same
+kind of figure without the tilde. BEIR is a 17-dataset zero-shot retrieval benchmark; CoIR is
+a 20-dataset code-retrieval benchmark.
 
 - **55.33 BEIR at 149M** beats `bge-base-en-v1.5` (53.2) and matches
   `snowflake-arctic-embed-m-v2.0` (~55.5) at roughly half that model's size and without
@@ -494,9 +506,15 @@ size and published reranking benchmarks weighted toward code:
 
 | model | params | ctx | licence | BEIR | code retrieval |
 |---|---:|---:|---|---:|---|
-| ms-marco-MiniLM-L6-v2 | 22.7M | 512 | Apache-2.0 | — | none published |
-| jina-reranker-v2-base-multilingual | 278M | 1024 | **CC-BY-NC-4.0** | 53.17 | CSN MRR@10 71.36 (3 tasks) |
-| **gte-reranker-modernbert-base** | **149M** | **8192** | **Apache-2.0** | **56.73** | **CoIR 79.99 (20 tasks)** |
+| [ms-marco-MiniLM-L6-v2](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2) | 22.7M | 512 | Apache-2.0 | — | none published |
+| [jina-reranker-v2-base-multilingual](https://huggingface.co/jinaai/jina-reranker-v2-base-multilingual) | 278M | 1024 | **CC-BY-NC-4.0** | 53.17 ‡ | CSN MRR@10 71.36 (3 tasks) ‡ |
+| **[gte-reranker-modernbert-base](https://huggingface.co/Alibaba-NLP/gte-reranker-modernbert-base)** | **149M** | **8192** | **Apache-2.0** | **56.73** ‡ | **CoIR 79.99 (20 tasks)** ‡ |
+
+**As above: published figures, cited and not measured here.** ‡ Reported on the linked model
+card — jina's as nDCG@10 over 17 BEIR datasets and MRR@10 over 3 CodeSearchNet tasks, gte's as
+BEIR and CoIR averages. CSN is CodeSearchNet, a code-search benchmark predating CoIR and
+covering far fewer tasks, which is why the two code columns are not directly comparable and
+the comparison below is stated in those terms rather than as one number against another.
 
 Best code retrieval of the three (CoIR 79.99 over 20 tasks vs jina's CodeSearchNet 71.36 over
 3), best BEIR, at roughly half jina's size — and jina's CC-BY-NC licence rules it out of
