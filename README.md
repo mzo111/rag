@@ -863,6 +863,57 @@ left unjudged (83 of 131, against dense's 134 of 166). The apparent spread betwe
 is mostly a checker artifact tracking claims-per-answer, not a difference in how faithfully
 each retriever's context gets used. Every interval on the left overlaps every other.
 
+#### By query category
+
+Same two readings, `unjudged = unsupported` / `judged only`, with the claim count behind each
+cell. Ten queries or fewer sit behind every cell, so these are indicative, not separating.
+
+| retriever | api_lookup | conceptual | multi_hop | tutorial |
+|---|---|---|---|---|
+| bm25 | 0.64 / 0.84 (n=33) | 0.57 / 0.81 (n=30) | 0.46 / 0.79 (n=24) | 0.50 / 0.96 (n=44) |
+| dense | 0.58 / 0.71 (n=38) | 0.59 / 0.79 (n=37) | 0.59 / 0.76 (n=27) | 0.72 / 0.85 (n=64) |
+| hybrid | 0.62 / 0.83 (n=32) | 0.56 / 0.68 (n=27) | 0.59 / 0.76 (n=27) | 0.78 / 0.95 (n=45) |
+| rerank | 0.65 / 0.87 (n=40) | 0.67 / 0.86 (n=45) | 0.42 / 0.64 (n=33) | 0.62 / 0.96 (n=37) |
+| agent | 0.76 / 0.91 (n=38) | 0.60 / 0.78 (n=30) | 0.42 / 0.73 (n=26) | 0.61 / 0.90 (n=44) |
+
+Pooled over all five, the category ordering is the one thing here that survives both
+readings:
+
+| category | claims | judged | unjudged = unsupported | judged only | refusals |
+|---|---:|---:|---:|---:|---:|
+| api_lookup | 181 | 142 | 0.652 | 0.831 | 9/60 |
+| conceptual | 169 | 129 | 0.604 | 0.791 | 0/50 |
+| multi_hop | 137 | 93 | **0.496** | **0.731** | 5/40 |
+| tutorial | 234 | 168 | **0.654** | **0.911** | 1/50 |
+
+**`multi_hop` is the worst category under both readings and `tutorial` the best.** That is
+the result you would predict from the task: a multi-hop answer has to join facts that live on
+different pages, and the join itself — the sentence that connects them — is exactly the kind
+of claim no single passage states. Tutorial answers mostly restate one prose passage and
+stay inside it. `multi_hop` also has the lowest judged share (93 of 137), so its two readings
+are the furthest apart of any category, and it is where the checker defect bites hardest.
+
+`api_lookup` produced 9 of the 15 refusals on real context and `conceptual` none, which cuts
+against what recall@k says about those categories: `api_lookup` is the top category by R@10
+for both BM25 (0.808) and the hybrid (0.720), and `conceptual` is below it for both. A
+retriever finding the right page and the generator then declining to answer from it is a
+distinct failure from retrieval missing it, and only this stage can see the difference.
+
+#### Citations
+
+The model never cited a passage outside the ten it was given: **0 dangling citations out of
+726**, in every retriever. Two answers of the 183 scored carried no citation at all, which
+the prompt forbids; both are counted in the support rate like any other answer, since an
+uncited sentence is still a claim that either is or is not in the passages.
+
+| retriever | scored answers | citations | dangling | rate |
+|---|---:|---:|---:|---:|
+| bm25 | 34 | 145 | 0 | 0.000 |
+| dense | 38 | 168 | 0 | 0.000 |
+| hybrid | 38 | 123 | 0 | 0.000 |
+| rerank | 35 | 148 | 0 | 0.000 |
+| agent | 38 | 142 | 0 | 0.000 |
+
 What the failures look like, from the lowest-scoring hybrid answer (q20, `.contiguous()`):
 the first claim quotes the docstring and is supported; the three that follow — when you
 *need* to call it — are the model completing the topic from prior knowledge. The passages
@@ -901,17 +952,19 @@ the answer, which is a different measurement.
 Per query, measured live on an RTX 4060 Ti. Retrieval is measured on every run; model time is
 the live call's duration.
 
-| retriever | answer p50 | answer p90 | retrieval p50 | prompt tok | completion tok | tok/query |
-|---|---:|---:|---:|---:|---:|---:|
-| bm25 | 3.2 s | 4.4 s | 9 ms | 2,759 | 93 | 2,853 |
-| dense | 2.7 s | 5.6 s | 35 ms | 2,204 | 107 | 2,312 |
-| hybrid | 2.8 s | 4.5 s | 39 ms | 2,574 | 101 | 2,675 |
-| rerank | 3.2 s | 5.2 s | 2,356 ms | 2,654 | 96 | 2,749 |
-| agent | 5.4 s | 7.7 s | 4,043 ms | 2,442 | 99 | 2,541 |
+| retriever | answer min / p50 / p90 / max | retrieval p50 | end-to-end p50 | prompt tok | completion tok | tok/query |
+|---|---|---:|---:|---:|---:|---:|
+| bm25 | 1.1 / **3.2** / 4.4 / 13.2 s | 9 ms | 3.2 s | 2,759 | 93 | 2,853 |
+| dense | 1.2 / **2.7** / 5.6 / 6.8 s | 35 ms | 2.8 s | 2,204 | 107 | 2,312 |
+| hybrid | 0.8 / **2.8** / 4.5 / 7.4 s | 39 ms | 2.8 s | 2,574 | 101 | 2,675 |
+| rerank | 1.6 / **3.2** / 5.2 / 10.2 s | 2,356 ms | 5.6 s | 2,654 | 96 | 2,749 |
+| agent | 3.8 / **5.4** / 7.7 / 11.3 s | 4,043 ms | 9.5 s | 2,442 | 99 | 2,541 |
 
 Retrieval latency spans three orders of magnitude — 9 ms for BM25 against 2.4 s for the
 reranker and 4.0 s for the agent — while the generation cost barely moves, because all five
-send the model the same ten passages. Faithfulness scoring costs a further two calls per
+send the model the same ten passages. End-to-end that makes the agent about 3× the hybrid
+per query (9.5 s against 2.8 s) for a faithfulness rate inside the hybrid's interval, on top
+of the retrieval result that it does not beat plain retrieval either. Faithfulness scoring costs a further two calls per
 answer, which is why the full sweep is 807 cached calls rather than 200.
 
 ### What this measures, and what it does not
@@ -945,7 +998,12 @@ answer, which is why the full sweep is 807 cached calls rather than 200.
    fresh run is reproducible only up to Ollama's numerics. Nothing here is a claim about
    generation in general; it is a claim about this model on this corpus at this k.
 
-6. **The claims are the model's own decomposition.** An answer split into 3 claims and the
+6. **Category cells are small.** The by-category tables above rest on 8-12 queries and
+   24-64 claims per cell. The pooled category ordering (`multi_hop` worst, `tutorial` best)
+   holds under both readings and is worth something; the per-retriever cells are not
+   separating and should not be read as one retriever beating another on a category.
+
+7. **The claims are the model's own decomposition.** An answer split into 3 claims and the
    same answer split into 6 are not scored on the same denominator, and the decomposer is
    never checked against a human split. The claim counts in the table above are inputs to the
    metric, not properties of the answers.
