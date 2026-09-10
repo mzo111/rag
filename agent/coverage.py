@@ -96,8 +96,16 @@ def coverage(delta: Mapping, queries: Sequence[Query]) -> dict:
 
 
 AGENT_PREFIX = "agent/"
-#: Every system this module can pool, plain retriever or agent over it.
-SYSTEMS = tuple(BASE_RETRIEVERS) + tuple(AGENT_PREFIX + b for b in BASE_RETRIEVERS)
+RERANK_PREFIX = "rerank/"
+#: Every system this module can pool: a plain retriever, an agent over one, or a
+#: cross-encoder rerank of one. The rerankers were never pooled, so their unjudged rate is
+#: the one number here that is a finding rather than a check.
+SYSTEMS = (
+    tuple(BASE_RETRIEVERS)
+    + tuple(AGENT_PREFIX + b for b in BASE_RETRIEVERS)
+    + tuple(RERANK_PREFIX + b for b in ("bm25", "hybrid"))
+    + ("random",)
+)
 
 RE_POOL_HEADER = """\
 # Re-pool for the agent layer - ONLY pages that carry no judgment in eval/queries.yaml.
@@ -145,6 +153,17 @@ def build_systems(names: Sequence[str], store, client) -> dict[str, object]:
     for name in names:
         if name.startswith(AGENT_PREFIX):
             out[name] = AgentRetriever(store, base_for(name[len(AGENT_PREFIX) :]), client)
+        elif name == "random":
+            from eval.run import RandomBaseline
+
+            # The control: what an unpooled system's coverage looks like.
+            out[name] = RandomBaseline(store.chunk_ids(), seed=0)
+        elif name.startswith(RERANK_PREFIX):
+            from retrieval.rerank import RerankRetriever
+
+            # Built on the shared base, so `hybrid` and `rerank/hybrid` read the same
+            # first stage and the difference in coverage is the reranking alone.
+            out[name] = RerankRetriever(store, base_for(name[len(RERANK_PREFIX) :]))
         else:
             out[name] = base_for(name)
     return out

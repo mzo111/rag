@@ -360,15 +360,25 @@ Dense still scores below BM25 (R@5 0.371 vs 0.392, R@10 0.588 vs 0.675). It keep
 The re-pool was meant to close the unjudged hole under the agent *and* under the hybrid, whose
 published numbers had been running through a 10.5% hole. It did:
 
-| system | unjudged @ 611 | unjudged @ 814 | new pages the re-pool absorbed |
-|---|---:|---:|---:|
-| bm25 | 0.0% | 0.0% | 0 |
-| dense | 0.0% | 0.0% | 0 |
-| **hybrid** | **10.5%** | **0.0%** | 40 |
-| **agent/hybrid** | **20.0%** | **0.0%** | 75 |
-| rerank(bm25) | 28.2% | 23.8% | 99 |
-| rerank(hybrid) | 26.3% | 22.8% | 95 |
-| random (seed 0) | 98.2% | 97.2% | 300 |
+| system | unjudged @ 611 | unjudged @ 814 | unjudged pages @ 611 → @ 814 | pages the re-pool absorbed |
+|---|---:|---:|---:|---:|
+| bm25 | 0.0% | 0.0% | 0 → 0 | 0 |
+| dense | 0.0% | 0.0% | 0 → 0 | 0 |
+| **hybrid** | **10.5%** | **0.0%** | 40 → 0 | **40** |
+| **agent/hybrid** | **20.0%** | **0.0%** | 75 → 0 | **75** |
+| rerank(bm25) | 28.2% | 23.8% | 99 → 85 | 14 |
+| rerank(hybrid) | 26.2% | 22.8% | 95 → 84 | 11 |
+| random (seed 0) | 98.2% | 97.2% | 300 → 299 | 1 |
+
+Both columns come from the same tool, run against the current judgments and against the
+611-judgment file recovered from history:
+
+```
+python -m agent.coverage --offline --system rerank/bm25 --system rerank/hybrid \
+    --system hybrid --system agent/hybrid --system random
+git show 1ff9e3d:eval/queries.yaml > /tmp/q611.yaml    # the @ 611 column
+python -m agent.coverage --offline --queries /tmp/q611.yaml --system rerank/bm25 ...
+```
 
 Per category the closure is complete for both pooled systems — agent/hybrid's worst category
 was `multi_hop` at 30.0% unjudged, now 0.0%. **The four systems the re-pool was built from
@@ -378,8 +388,9 @@ BM25 and dense have been since the first round.**
 **The rerankers are now the systems with a hole.** They were never pooled: they reorder a
 top-100 that no pool ever saw, so they can promote a page into the top 10 that nothing has
 graded. 23.8% and 22.8% of what they return is unjudged and is scored as grade 0. The
-re-pool cut that only incidentally (95–99 of their unjudged pages happened to be pooled for
-another system). **The reranking conclusions below are therefore the least trustworthy in
+re-pool barely touched them: **14 and 11 of their unjudged pages** happened to be pooled for
+another system, out of 99 and 95. Their rate fell mostly because the denominator of judged
+pages grew around them, not because their own gap was addressed. **The reranking conclusions below are therefore the least trustworthy in
 this README**, and in the direction of understating the rerankers.
 
 Random's 97.2% is the control: it says what an unpooled system looks like.
@@ -583,9 +594,13 @@ These are the reasons not to read the table as a clean measurement of retrieval 
    limitation 2 suggest, and they are exactly the judgments that carry the agent-vs-hybrid
    comparison.
 
-6. **The 159 grade-1 judgments predate the rubric.** They were graded before
-   `eval/GRADING.md` was written and have not been re-graded. `eval/regrade_ones.yaml` is
-   built and unfilled. Grade 1 is the least reproducible category, and it is the largest.
+6. **237 of the 303 grade-1 judgments predate the rubric, and the re-grade file covers
+   only 159 of them.** Grade 1 arrived in three rounds — 159 from `eval/pool.yaml`, 78 from
+   `eval/pool_delta.yaml`, 66 from `eval/pool_agent.yaml` — and `eval/GRADING.md` was written
+   between the second and third, so the first 237 were graded without it.
+   `eval/regrade_ones.yaml` was built from `pool.yaml` alone (`n: 159`, `source: pool.yaml`)
+   and is still unfilled, which leaves **78 pre-rubric grade-1 judgments outside any re-grade
+   plan**. Grade 1 is the least reproducible category and the largest.
 
 7. **nDCG is reported but is not used to rank retrievers.** Its `2^g − 1` gain weights a
    grade 2 at 3× a grade 1, which amplifies exactly the 1↔2 boundary that reproduces worst
@@ -1056,11 +1071,13 @@ answer, which is why the full sweep is 807 cached calls rather than 200.
 3. ~~Grade `eval/pool_agent.yaml`, then run the ablation.~~ Done 2026-09-09: 814 judgments,
    hybrid's and agent/hybrid's unjudged rates both closed to 0.0%, and the ablation says the
    agent does not beat plain retrieval.
-4. **Re-grade the 303 pre-rubric grade-1 judgments** (`eval/regrade_ones.yaml`, built and
-   unfilled). Grade 1 is the largest category and the least reproducible; until it is redone
-   against `eval/GRADING.md`, limitation 3 stands and the metrics stay optimistically biased.
-   Note the file was built against the 611-judgment set and does not cover the 66 grade-1
-   judgments the agent round added.
+4. **Re-grade the pre-rubric grade-1 judgments.** There are 303 grade-1 judgments in all;
+   **237 predate `eval/GRADING.md`** (159 from `pool.yaml`, 78 from `pool_delta.yaml`) and 66
+   came after it with the agent round. `eval/regrade_ones.yaml` is built and unfilled but
+   covers only the 159 from `pool.yaml`, so finishing it still leaves 78 pre-rubric grade-1
+   judgments un-re-graded; a second file would be needed for those. Grade 1 is the largest
+   category and the least reproducible, so until this is done limitation 3 stands and the
+   metrics stay optimistically biased.
 5. **Pool the rerankers.** They are now the only systems with an open unjudged hole (23.8%
    and 22.8%), because they promote out of a top-100 nothing has graded. Until that round is
    run, the reranking result is biased against them by an unknown amount and is the weakest
