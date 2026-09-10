@@ -648,8 +648,37 @@ def test_coverage_table_renders(store):
 # --- pooling the union of several systems ---------------------------------------
 
 
-def test_systems_lists_each_base_retriever_plain_and_agent_wrapped():
-    assert set(SYSTEMS) == {"bm25", "dense", "hybrid", "agent/bm25", "agent/dense", "agent/hybrid"}
+def test_systems_lists_every_poolable_system():
+    """Base retrievers, their agent wrappers, both rerankers, and the random control.
+
+    The rerankers matter here: they are the systems the README calls least trustworthy on
+    coverage grounds, and leaving them out of SYSTEMS is what made that claim unmeasurable.
+    """
+    assert set(SYSTEMS) == {
+        "bm25",
+        "dense",
+        "hybrid",
+        "agent/bm25",
+        "agent/dense",
+        "agent/hybrid",
+        "rerank/bm25",
+        "rerank/hybrid",
+        "random",
+    }
+
+
+def test_build_systems_gives_a_reranker_the_shared_base(store):
+    """rerank/bm25 must reorder the same first stage `bm25` uses, or the coverage
+    difference between them would confound reranking with a different base."""
+    systems = build_systems(["bm25", "rerank/bm25"], store, FakeClient())
+    assert not isinstance(systems["bm25"], AgentRetriever)
+    assert systems["rerank/bm25"].base is systems["bm25"]
+
+
+def test_build_systems_makes_random_a_seeded_baseline(store):
+    systems = build_systems(["random"], store, FakeClient())
+    first = systems["random"].search("anything", 5)
+    assert build_systems(["random"], store, FakeClient())["random"].search("anything", 5) == first
 
 
 def test_build_systems_wraps_only_the_agent_prefixed_names(store):
