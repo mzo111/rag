@@ -778,6 +778,18 @@ python -m agent.coverage --offline \
   --out eval/pool_agent.yaml
 ```
 
+`make_grading_page.py` turned that pool into the interface the 203 candidates were actually
+graded in — one self-contained HTML page carrying the rubric, each candidate's title, section
+path and snippet, and a link to the live doc, so nothing else had to be open while grading.
+What it emits is `agent_pool_grades.txt`, one `candidate-id: grade` line per row; those
+grades go into the `grade:` fields of `eval/pool_agent.yaml`, which
+`python -m eval.pool append` then folds into `eval/queries.yaml` (append, never merge — merge
+would replace a query's whole judgment list):
+
+```bash
+python3 make_grading_page.py eval/pool_agent.yaml grading.html   # then grade in a browser
+```
+
 `--system` is repeatable, and the systems are pooled in **one** `build_pool` call rather than
 merged afterwards, so a page four systems returned is one candidate carrying four `found_by`
 entries, not four rows. The overlap is large: 270 unjudged pairs summed over the four systems

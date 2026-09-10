@@ -5,6 +5,13 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.per-file-ignores]
+# HTML/CSS template generator, not library code. The long lines are CSS rules and
+# grading prose inside string literals, and percent formatting is deliberate: the
+# page template is full of CSS braces that an f-string would require doubling
+# throughout. Reformatting to satisfy these two rules would make the file worse.
+"make_grading_page.py" = ["E501", "UP031"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
